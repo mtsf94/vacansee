@@ -1185,9 +1185,9 @@ function flyTourDivToHamburger() {
   // Calculate ending position, center to center
   const dialogCenterX = dialogRect.left + dialogRect.width / 2;
   const dialogCenterY = dialogRect.top + dialogRect.height / 2;
-  const burgerCenterX = burgerRect.left + burgerRect.width / 2;
+  const burgerLeftX = burgerRect.left ;
   const burgerTopY = burgerRect.top;
-  const translateX = burgerCenterX - dialogCenterX;
+  const translateX = burgerLeftX - dialogCenterX;
   const translateY = burgerTopY - dialogCenterY;
 
   // Animate
