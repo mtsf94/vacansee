@@ -69,10 +69,10 @@ function passwordProtect(req, res, next) {
   const clientIp = req.ip || req.connection.remoteAddress;
   
   // IP check (as before)
-  // if (!ALLOWED_IPS.includes(clientIp)) {
-    // console.log("Unauthorized access from " + clientIp);
-    // return res.status(403).send('Access denied.');
-  // }
+  if (!ALLOWED_IPS.includes(clientIp)) {
+    console.log("Unauthorized access from " + clientIp);
+    return res.status(403).send('Access denied.');
+  }
 
   // Check lockout
   const now = Date.now();
