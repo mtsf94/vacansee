@@ -25,6 +25,10 @@ html, body {
   position: relative;
   top: 0px;
   z-index: 31;
+  /*min-height:calc(100dvh - 60px);*/
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
 }
 
 .mode-tabs-container {
@@ -75,8 +79,10 @@ html, body {
   padding: 0px 10px;
 }
 
+
 footer {
   width: 100%;
+  bottom:0px;
   text-align: center;
   padding: 1em 0;
   background: var(--footer_bg_color);
@@ -84,7 +90,7 @@ footer {
   font-size: 1em;
   border-top: 1px solid #eee;
   z-index: 31;
-  position: relative;
+  position: absolute;
 }
 /* ===== Layout: Navbar Banner & Controls ===== */
 .top-banner, .top-banner * {
@@ -700,19 +706,25 @@ footer {
   flex-basis: 65%;
 }
 .about-text {
-  padding: .25em 2em; 
-  z-index: 31;
+  flex-grow: 1; /* expand to fill remaining space */
   background: #fff;
-    padding-bottom: 3em; 
-    position: relative;
+  padding: .25em 1em; /* remove padding if you want no gap */
+  position: relative;
+  z-index: 31;
+}
+#fullpagediv {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh; /* or 100vh */
 }
 
  #aboutmap-frame {
     width: 100%;
     overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
     position: relative;
+    display:flex;
+    flex-direction: column;
+    flex-grow: 1;
   }
   .fullscreen-btn {
     position: absolute;
@@ -941,7 +953,6 @@ footer {
   }
 
   .map-toggle {
-    /*right: 10px;*/
     position: relative;
   }
 

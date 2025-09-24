@@ -1,4 +1,4 @@
-// translations/translations.js
+// translations/translations.js -- work in progress, not deployed yet
 const translations = {
   en: {
     "VacanSee":"VacanSee",

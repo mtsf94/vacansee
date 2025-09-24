@@ -50,7 +50,6 @@ const map = new maplibregl.Map({
   zoom: 13
 });
 
-
 // Lock the pitch to 0 so map stays flat
 map.setPitch(0);
 
@@ -327,13 +326,6 @@ if (fullscreenBtn || exitBtn){
     }
   });
 }
-
-function onFullscreenChange() {
-  
-}
-
-document.addEventListener('fullscreenchange', onFullscreenChange);
-
 
 // =================== //
 // ===== NAV BAR ===== //
