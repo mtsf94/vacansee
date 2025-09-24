@@ -1186,9 +1186,9 @@ function flyTourDivToHamburger() {
   const dialogCenterX = dialogRect.left + dialogRect.width / 2;
   const dialogCenterY = dialogRect.top + dialogRect.height / 2;
   const burgerCenterX = burgerRect.left + burgerRect.width / 2;
-  const burgerCenterY = burgerRect.top + burgerRect.height / 2;
+  const burgerTopY = burgerRect.top;
   const translateX = burgerCenterX - dialogCenterX;
-  const translateY = burgerCenterY - dialogCenterY;
+  const translateY = burgerTopY - dialogCenterY;
 
   // Animate
  dialog.style.transition = `
