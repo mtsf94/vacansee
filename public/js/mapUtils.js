@@ -416,7 +416,6 @@ const getParcelTooltip = (group, year) => {
   `;
 
    tip += `<br><span class="frontage-label" >${t("Est. Frontage")}</span>: ${safeVal(firstFeature.properties.street_frontage_ft ? firstFeature.properties.street_frontage_ft.toLocaleString() + "'" : null)}`;
-   // if (!isMultiunit) tip += `<br>`;
   (isMultiunit ? sorted : [group[0]]).forEach((unit,unitIndex) => {
     const p = unit.properties;
     const r = p.vacancy_by_year?.[year] || {};
