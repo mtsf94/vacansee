@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visitor Log</title>
+    <style>
+        body { font-family: sans-serif; background: #f7f7f7; }
+        table { border-collapse: collapse; margin: 2em auto; background: #fff; }
+        th, td { padding: 8px 16px; border: 1px solid #ccc; }
+        th { background: #eee; }
+        h2 { text-align: center; margin-top: 1.5em; }
+    </style>
+</head>
+<body>
+    <h2>Visitor Log for /sfmap</h2>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Hashed IP</th>
+            <th>Browser</th>
+            <th>OS</th>
+            <th>Language</th>
+            <th>Neighborhood</th>
+            <th>Time (UTC)</th>
+        </tr>
+        <% if (visits.length === 0) { %>
+            <tr><td colspan="4" style="text-align:center;">No visits logged yet.</td></tr>
+        <% } else { %>
+            <% visits.forEach(function(visit, idx) { %>
+                <tr>
+                    <td><%= idx + 1 %></td>
+                    <td><%= visit.hashedId %></td>
+                    <td><%= visit.browser %></td>
+                    <td><%= visit.os %></td>
+                    <td><%= visit.lang %></td>
+                    <td><%= visit.nbhd.name %></td>
+                    <td><%= visit.time %></td>
+                </tr>
+            <% }); %>
+        <% } %>
+    </table>
+</body>
+</html>

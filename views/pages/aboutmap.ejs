@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title><%= t(websiteName) %></title>
+    <%- include('../partials/header') %>
+    <style>
+:root {
+  --header_color_1: #d64200;
+  --header_color_2: white;
+  --header_menu_bg: #2c3e50;
+  --legend_color_1: white;
+  --footer_bg_color: #feffff;
+}
+.hidden {
+  display: none !important;
+}
+
+
+.loading-overlay {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  background: var(--header_color_1);
+  color:white;
+  height: 100dvh;
+  z-index: 600;
+  text-align: center;
+  padding-top: 20vh;
+  font-size: 2em;
+  font-weight: 600;
+}
+
+.progress-container {
+    position: relative;
+  width: 50%;
+  margin: 40px auto 0 auto;
+  height: 30px;
+  background:  #eee;
+  border-radius: 15px;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px #aaa;
+}
+
+.loading-progress-bar {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 15px;
+ }
+
+.loading-progress-bar.continuous {
+  width: 25%;
+  left: 0;
+  animation: movebar 1.5s linear infinite;
+  background: linear-gradient(90deg,
+   var(--header_color_1) 0%,
+  #d84a08 15%,
+  #db5731 30%,
+  #e6764e 45%,
+  #f39467 60%,
+  #f9b48c 75%,
+  #fdd4b6 90%,
+  #fdeede 100%
+);
+
+
+}
+
+@keyframes movebar {
+  0% { left: 0%; }
+  100% { left: 75%; }
+}
+
+.loading-progress-bar.finite {
+  height: 100%;
+  width: 0%;
+  background: white;
+  border-radius: 15px;
+}
+html, body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+ }
+
+</style>
+</head>
+<body>
+
+<div id="spinner-overlay" class="loading-overlay">
+  <div id="loading-message-continuous">Loading site...</div><br>
+    <div class="progress-container finite">
+        <div class="loading-progress-bar continuous"></div>
+    </div>
+</div>
+
+
+<div  id="loading-overlay" class="loading-overlay hidden">
+    <span id="loading-message-finite">
+        <%= t("Loading map...") %> 
+    </span>
+    <div class="progress-container finite">
+        <div id="loading-progress-bar" class="loading-progress-bar finite"></div>
+    </div>
+</div>
+
+    <div id="fullpagediv">
+
+        <%- include('../partials/nav') %>
+         <div id="tour-modal"  class="hidden" >
+                    <div id='tour-div'>
+                        <h2><%= t("Take a Tour?")%></h2>
+                        <p><%= t("Welcome! Would you like to take a tour of the map?") %></p>
+                        <button id="tour-start-btn" class="navbar-toggle tour-btn"><%= t("Yes") %></button>
+                        <button id="tour-skip-btn" class="navbar-toggle  tour-btn"><%= t("Skip") %></button><br>
+                        <label class="remember-switch">
+                        <span class="label-text"><%= t("Don't ask me again") %></span>
+                        <input type="checkbox" id="tour-skip-remember" class="switch-input">
+                        <span id="tour-skip-slider" class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+        <!-- <div id="mytest">he/llo</div> -->
+        <div id="map-and-about" >
+            <!-- MAP FRAME -->
+            <div id="aboutmap-frame" class="hidden">
+                <!-- Fullscreen button (diagonal arrows in) -->
+                <button class = "fullscreen-btn" id="aboutmap-fullscreen-btn" title="Full Screen">
+                <span>&#x2922;</span>
+                </button>
+                <!-- Exit fullscreen button (diagonal arrows out), hidden by default -->
+                <button class = "fullscreen-btn hidden" id="aboutmap-exit-btn" title="Exit Full Screen">
+                <span>&#x2922;</span>
+                </button>
+
+                <div id="parcel-popcorn-container" ></div>
+
+                <div id="map-container">
+                    <div id="year-timeline" class="year-timeline">
+                        <span class="year-tick" data-year="2022">2022</span>
+                        <span class="year-tick" data-year="2023">2023</span>
+                        <span class="year-tick" data-year="2024">2024</span>
+                        <button id="animate-timeline" class="animate-btn" title="Animate">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M17 1l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M21 5H13a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M7 23l-4-4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M3 19h8a7 7 0 1 0-7-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="aboutmap" class="aboutmap"></div>
+                    <div class="legend-container" id="legend-container">
+                         <div id="map-legend"></div>
+                    </div> 
+                    <div id="map-filter" class="map-filter"></div>
+                    <div id="legend-minimize-container" class="hidden" ></div> 
+                    
+                </div>
+               
+                 <div id="tour-tooltip" class="hidden">
+                  <span id="tour-tooltip-text"></span>
+                  <div class="tour-control">
+                    <button id="tour-prev-btn" class="navbar-toggle"><%= t("Prev")%> </button>
+                    <button id="tour-next-btn" class="navbar-toggle"><%= t("Next")%> </button>
+                    <button id="tour-exit-btn" class="navbar-toggle "><%= t("Exit")%> </button>
+                  </div>
+                </div>
+
+        <!-- ABOUT TEXT -->
+            <div id="about-text" class = "about-text">
+                <h2 class="main-color"><%= t("What is VacanSee?") %></h2>
+                <p>
+                    <strong><%= t(websiteName) %></strong>
+                    <%= t('is an interactive map of commercial property vacancies in San Francisco based on public open data.') %>
+                </p>
+                <p>
+                   <%- t('In 2020, San Francisco voters <a href="https://www.sfelections.org/results/20200303/data/20200303_3/summary.pdf">passed</a> Prop D, creating a vacancy tax on certain commercial space in SF. Prop D <a href="https://www.sftreasurer.org/business/taxes-fees/commercial-vacancy-tax-cvt">requires</a> owners and tenants to file annual returns. Self-reported data collection by property owners began in 2022. Prop D funds support the Small Business Assistance Fund, helping local businesses thrive.') %>
+                </p>
+                <p>
+                    <%= t("The tax amount is based on the  property's street-facing frontage: $250 per foot in the first vacant year, $500 in the second, and $1,000 from vacant year three onward. Although official frontage data was unavailable, this map estimates frontage using GeoJSON property data. All such estimates are unofficial.") %>
+                </p>
+                <p><%- t('VacanSee is a community-built tool and not affiliated with the city. This map complements existing <a href="https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2">official SFGov visualizations</a>, letting users explore where vacancies were reported in the first years of data collection. With this map, users can:') %>
+                <ul>
+                    <li><strong><%= t("Browse") %>:</strong> <%= t("Discover vacant commercial properties across San Francisco.") %></li>
+                    <li><strong><%= t("Report") %>:</strong> <%= t("Spot an error in the data? Use the map's links to contact the SF Treasurer.") %></li>
+                    <li><strong><%= t("Contribute") %>:</strong> <%= t('VacanSee is an open-source project in development. Have feedback or a story about a property to share? Visit ') %><a href="https://github.com/mtsf94/vacansee" target="_blank" class="link-text"><%=t('GitHub') %></a><%= t(' or email at ') %> <a href="mailto:info@vacansee.org">info@vacansee.org</a>.</li>
+                </ul>
+            </div>
+            
+       </div>
+       <footer  id="footer" class="hidden" >
+      <span>
+        <a href="https://github.com/mtsf94/vacansee" target="_blank" class="link-text"><%= t("GitHub") %></a>
+        <span> | </span>
+        <a href="/privacy?lang=<%= currentLang %>" class="link-text"><%= t("Privacy Policy")%></a>
+        
+      </span>
+    </footer>
+</div>
+
+<div class="sr-only" id="aria-live" role="status" aria-live="polite"></div>
+    <%- include('../partials/footer') %>
+</div>
+    <script>
+        const neighborhood = <%- JSON.stringify(neighborhood) || 'null' %>;
+
+      window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
+      window.CURRENT_LANG = "<%= currentLang %>";
+      function t(key) {
+        return window.TRANSLATIONS[key] || key;
+      }
+    </script>
+    <script src="js/mapNav.js"></script>
+    <script src="js/mapUtils.js"></script>
+    <script src="js/mapMain.js"></script>
+</body>
+</html>

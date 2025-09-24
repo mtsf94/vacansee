@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title><%= t("Vacant Store Map") %></title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #embed-map-container { width: 100vw; height: 100vh; }
+  </style>
+  <%- include('../partials/header') %>
+</head>
+<body> 
+    <div id="map-container">
+                <div id="year-timeline" class="year-timeline">
+                    <span class="year-tick" data-year="2022">2022</span>
+                    <span class="year-tick" data-year="2023">2023</span>
+                    <span class="year-tick" data-year="2024">2024</span>
+                    <button id="animate-timeline" class="animate-btn" title="Animate">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M17 1l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <path d="M21 5H13a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <path d="M7 23l-4-4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <path d="M3 19h8a7 7 0 1 0-7-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="aboutmap-map"></div>
+                <!-- <div id="map2"></div> -->
+                <div class = "embed-legend" id="legend-container">
+                     <div id="map-legend"></div>
+                </div> 
+                <div class = "embed-filter hidden" id="map-filter"></div>
+                <div id="map-legend-minimize" class="embed-minimize  map-legend-minimize hidden" >Legend + </div> 
+            </div>
+        </div>
+        
+        
+        <div id="aria-live" role="status" aria-live="polite" style="position:absolute;left:-9999px;"></div>
+    <%- include('../partials/footer') %>
+
+  <script>
+    window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
+    window.CURRENT_LANG = "<%= currentLang %>";
+    function t(key) { return window.TRANSLATIONS[key] || key; }
+  </script>
+  <script src="/js/mapUtils.js"></script>
+  <script src="/js/mapMain.js"></script>
+</body>
+</html>

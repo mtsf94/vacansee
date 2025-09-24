@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="<%= currentLang %>">
+<head>
+    <title><%= t("Privacy Policy") %> | <%= websiteName %></title>
+    <%- include('../partials/header') %>
+</head>
+<body>
+<%- include('../partials/nav') %>
+
+<main class="privacy-container">
+    <h2 style="color: #F04A00;"><%= t("Privacy Policy") %></h2>
+    <p>
+       Coming soon.
+    </p>
+    <p style="font-size: 0.95em;">
+       <%= t("Privacy policy last updated")%>: 2025-06-24
+    </p>
+</main>
+
+<%- include('../partials/footer') %>
+  <script>
+      window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
+      window.CURRENT_LANG = "<%= currentLang %>";
+      function t(key) {
+        return window.TRANSLATIONS[key] || key;
+      }
+    </script>
+    <script src="js/mapNav.js"></script>
+
+</body>
+</html>

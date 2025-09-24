@@ -1,0 +1,62 @@
+<div id="navbar" class="navbar">
+  <div id="navbar-left" class="navbar-left" class="hidden">
+    <img src="/img/maplogo_rev5.png" alt="Logo" class="navbar-logo" />
+    <span class="navbar-title-text"><a class="navbar-link"  href="/?lang=<%= currentLang %>"><%= t(websiteName) %></a></span>
+      <button
+      class="navbar-hamburger"
+      id="navbar-hamburger"
+      aria-label="<%=t('Open menu')%>" >
+     &#9776;
+    </button>
+  </div>
+
+  <div class="navbar-right" id="top-banner-actions">
+    <% if (offerTour){ %>
+    <div id="tour-link" >
+      <button class="navbar-toggle" id="tour-start-btn-nav" aria-haspopup="false" type="button" title="<%= t('Take a Tour') %>">
+      <%= t("Take a Tour") %>
+      </button>
+    </div>
+    <% } %>
+
+   <div id="github-link" class="navbar-toggle">
+        <a class="navbar-link" href="https://github.com/mtsf94/vacansee" target="_blank"><%=t("GitHub")%></a>
+   </div>
+    <!-- Language Selector -->
+    <div class="navbar-select" id="language-select">
+      <button
+        class="navbar-toggle"
+        id="language-toggle"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <span id="current-language">
+          <%= langTexts[currentLang] || langTexts['en'] %>
+        </span>
+        <span class="navbar-icon">
+          <!-- Globe SVG Icon -->
+          <svg width="16" height="16" viewBox="0 0 50 50">
+            <g transform="scale(2.1739)">
+              <path
+                d="M20.088 15.107h-2.823c.262-1.182.394-2.495.394-3.874 0-1.38-.132-2.693-.394-3.875h2.823c.526 1.182.789 2.496.789 3.875.065 1.379-.263 2.692-.789 3.874zm-5.122 5.057a11.209 11.209 0 0 0 1.97-3.743h2.43a9.802 9.802 0 0 1-4.4 3.743zM3.014 16.421h2.43c.46 1.51 1.116 2.758 1.97 3.743-1.773-.788-3.284-2.101-4.4-3.743zm-.657-9.128h2.824c-.263 1.182-.394 2.495-.394 3.874 0 1.38.131 2.693.394 3.875H2.357c-.525-1.182-.788-2.496-.788-3.875-.066-1.379.263-2.627.788-3.874zM7.48 2.236a11.209 11.209 0 0 0-1.97 3.743H3.08a9.802 9.802 0 0 1 4.4-3.743zm4.4 3.743V1.645c1.51.394 2.823 2.035 3.677 4.334h-3.678zm0 14.776v-4.334h3.677c-.854 2.298-2.167 3.94-3.678 4.334zm-1.314-4.334v4.334c-1.51-.394-2.824-2.035-3.677-4.334h3.677zm0-14.776v4.334H6.89c.853-2.298 2.167-3.94 3.677-4.334zm-4.531 9.588c0-1.38.197-2.693.46-3.875h4.071v7.75H6.494c-.262-1.248-.46-2.562-.46-3.875zm10.376 0c0 1.379-.197 2.693-.46 3.874H11.88V7.292h4.072c.263 1.248.46 2.562.46 3.94zm3.02-5.254h-2.43c-.459-1.51-1.115-2.758-1.97-3.743 1.774.788 3.284 2.101 4.4 3.743zM11.224.2C5.18.2.19 5.125.19 11.233.19 17.34 5.181 22.2 11.223 22.2s11.033-4.925 11.033-11.033C22.256 5.06 17.265.2 11.223.2z"
+                fill="currentColor"
+                fill-rule="evenodd"
+              />
+            </g>
+          </svg>
+        </span>
+        <span class="navbar-arrow" aria-hidden="true">▼</span>
+      </button>
+      <div class="navbar-menu hidden" id="language-menu" role="menu">
+        <% Object.keys(langTexts).forEach(lang => { %>
+          <button
+            class="navbar-option language-option"
+            data-lang="<%= lang %>"
+          ><span class="navbar-option"><%= langTexts[lang] %></span>
+          </button>
+        <% }) %>
+      </div>
+     </div>
+    
+  </div>
+</div>

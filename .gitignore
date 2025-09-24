@@ -1,0 +1,6 @@
+node_modules
+.env
+process_data
+archive
+views/pages/privacy.ejs
+data/*.csv
