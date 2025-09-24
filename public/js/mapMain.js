@@ -105,7 +105,6 @@ map.on('load', () => {
         .filter(group => {
         return groupHasCSVData(group, year)}
       );
-      ;
       let  initialFillColorExpression = getFillExpression(currentMode).color;
       map.addSource('parcels', { type: 'geojson', data: parcelsData });
       map.addLayer({
