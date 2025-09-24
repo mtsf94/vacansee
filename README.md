@@ -14,10 +14,10 @@ This open-source interactive map project visualizes San Francisco’s commercial
 
 ## Why Use This Map?
 
-- **Transparent:** This map builds on [existing visualizations](https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2) from DataSF to show which properties are vacant, which have filed owner and tenant returns in accordance with the law, and which are non-compliant—all on one map.
+- **Transparent:** This map builds on [existing visualizations](https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2) from DataSF to show the vacancy status of commercial spaces affected by Prop D. 
 - **Privacy-Focused** No third-party tracking. 
 - **Interactive:** Filter by year, vacancy status, and more.
-- **Mobile-Friendly:** Optimized for mobile devices.
+- **Mobile-Friendly:** Works on mobile devices.
 - **Embeddable:** Add the map to your own site with a single line of code (see below).
 
 ---
