@@ -90,7 +90,7 @@ footer {
   font-size: 1em;
   border-top: 1px solid #eee;
   z-index: 31;
-  position: absolute;
+  position: relative;
 }
 /* ===== Layout: Navbar Banner & Controls ===== */
 .top-banner, .top-banner * {
