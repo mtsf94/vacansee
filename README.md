@@ -57,8 +57,8 @@ Always looking for help!  Whether you’re a developer, designer, translator, or
 To run locally:
 
 ```
-git clone https://github.com/yourrepo/sf-vacancy-map.git
-cd sf-vacancy-map
+git clone https://github.com/mtsf94/vacansee.git
+cd vacansee
 npm install
 npm start
 ```
