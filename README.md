@@ -62,7 +62,6 @@ cd vacansee
 npm install
 npm start
 ```
-
 ---
 ## Acknowledgments
 
