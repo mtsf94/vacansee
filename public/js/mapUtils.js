@@ -1,7 +1,4 @@
  // ===== Helper Functions =====
-//7-19-25: this is 1628 lines. goal: 1500
-//7-19-25: now 1499 lines! goal: 1400 lol [then moved functions from mapMain...now up to 1521]
-
 const blockThreshhold = .8;
 const geometryHash = geo => JSON.stringify(geo.coordinates);
 
@@ -448,7 +445,7 @@ const getParcelTooltip = (group, year) => {
     }
     const hideNames = true;
     if (hideNames){
-      printOwner = (renderVal(r.owner) === t("Not Reported"))?  t("Not Filed"): t("Filed");
+      // printOwner = (renderVal(r.owner) === t("Not Reported"))?  t("Not Filed"): t("Filed");
       printTenant = (renderVal(r.tenant) === t("Not Reported"))? ((renderVal(r.subtenant) === t("Not Reported")) ? t("Not Filed"):renderVal(r.subtenant) ) : t("Filed");
     }
   
