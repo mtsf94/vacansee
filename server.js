@@ -39,6 +39,8 @@ cron.schedule('* * * * *', () => {
 
 const aggregateWordLevel= aggregateWord+ '-level';
 
+console.log("check");
+console.log(aggregateWordLevel);
 let cronCommand = '* * * * *';
 
 if (aggregateWord === 'minute'){
