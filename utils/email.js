@@ -6,12 +6,16 @@ const { subtractBucket, visitLog, makeAggregatedVisitsCSV , getTimeBucket} = req
 const sendEmail = async ({ subject, text, attachmentName, attachmentContent }) => {
   try {
     const smtpTransport = nodemailer.createTransport({
-      service: 'gmail',
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: {
         user: process.env.APP_MAIL_FROM,
         pass: process.env.APP_PASSWORD
       }
     });
+
 
     const info = await smtpTransport.sendMail({
       from: process.env.APP_MAIL_FROM,
