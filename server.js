@@ -15,6 +15,7 @@ const performAggregation = true;
 
 const app = express();
 app.set('view engine', 'ejs');
+app.set('trust proxy', true);
 app.set('views', path.join(__dirname, 'views'));
 
 const corsOptions = {
