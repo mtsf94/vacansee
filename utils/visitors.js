@@ -7,13 +7,15 @@ function aggregateVisit(visit, bucketUnit = 'hour') {
   const timeBucket = getTimeBucket(visit.time, bucketUnit);
   const b = visit.browser || 'Other';
   const o = visit.os || 'Other';
+  const nb = visit.nbhd || 'Other';
 
   if (!aggregatedVisits[timeBucket]) {
     aggregatedVisits[timeBucket] = {
       totalCount: 0,
       uniqueVisitors: new Set(),    // store hashedIds
       browserCounts: {},
-      osCounts: {}
+      osCounts: {},
+      nbhdCounts: {}
     };
   }
   const bucket = aggregatedVisits[timeBucket];
@@ -21,6 +23,7 @@ function aggregateVisit(visit, bucketUnit = 'hour') {
   bucket.uniqueVisitors.add(visit.hashedId);
   bucket.browserCounts[b] = (bucket.browserCounts[b] || 0) + 1;
   bucket.osCounts[o] = (bucket.osCounts[o] || 0) + 1;
+  bucket.nbhdCounts[nb] = (bucket.nbhdCounts[nb] || 0) + 1;
 }
 
 // Utility: get the current minute/hour/day/week for bucketing
@@ -90,14 +93,15 @@ function makeAggregatedVisitsCSV(visitLog, bucketUnit = 'hour', threshold = 10) 
   const buckets = {};
   for (const visit of visitLog) {
     const time = getTimeBucket(visit.time, bucketUnit);
+    const nbhd = visit.nbhd || "Other";
     const browser = visit.browser || "Other";
     const os = visit.os || "Other";
-    const key = browser + "||" + os;
+    const key = browser + "||" + os + "||" + nbhd;
     if (!buckets[time]) buckets[time] = {};
     buckets[time][key] = (buckets[time][key] || 0) + 1;
   }
 
-  const csvRows = ["TimeBucket,Browser,OS,Count"];
+  const csvRows = ["TimeBucket,Browser,OS,Nbhd,Count"];
   let grandTotal = 0;
 
   for (const [time, pairCounts] of Object.entries(buckets)) {
@@ -105,8 +109,8 @@ function makeAggregatedVisitsCSV(visitLog, bucketUnit = 'hour', threshold = 10) 
     // Print only those above threshold
     for (const [pair, cnt] of Object.entries(pairCounts)) {
       if (cnt >= threshold) {
-        const [browser, os] = pair.split("||");
-        csvRows.push(`${time},${browser},${os},${cnt}`);
+        const [browser, os, nbhd] = pair.split("||");
+        csvRows.push(`${time},${browser},${os},${nbhd},${cnt}`);
         grandTotal += cnt;
       } else {
         otherCount += cnt;
