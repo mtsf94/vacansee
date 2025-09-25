@@ -68,7 +68,7 @@ const ALLOWED_IPS = ADMIN_IPS; // Replace with the allowed IP(s)
 function passwordProtect(req, res, next) {
   const clientIp = req.ip || req.connection.remoteAddress;
   console.log("Look at "+req.ip );
-  console.log(req);
+  // console.log(req);
   
   // IP check (as before)
   if (!ALLOWED_IPS.includes(clientIp)) {

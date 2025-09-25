@@ -10,7 +10,7 @@ const { SETPORT } = require('./config/constants');
 var PORT     = process.env.PORT || 8080;
 
 //update this to change the aggregation timeframe and to turn aggregation off
-const aggregateWord= 'day';
+const aggregateWord= 'minute';
 const performAggregation = true;
 
 const app = express();
@@ -32,7 +32,7 @@ require('./app/routes.js')(app);
 const cron = require('node-cron');
 
 // Run cleanOldLogs every hour on the hour, keeping old visit logs for 30 days max
-cron.schedule('0 * * * *', () => {
+cron.schedule('* * * * *', () => {
   const deletedCount = cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000);
   console.log('Cleaned old logs - hourly cron job. Removed '+deletedCount+' logs.');
 });
@@ -41,6 +41,9 @@ const aggregateWordLevel= aggregateWord+ '-level';
 
 let cronCommand = '* * * * *';
 
+if (aggregateWord === 'minute'){
+  cronCommand = '* * * * *';
+}
 if (aggregateWord === 'hour'){
   cronCommand = '0 * * * *';
 }
