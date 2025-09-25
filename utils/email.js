@@ -14,7 +14,7 @@ const sendEmail = async ({ subject, text, attachmentName, attachmentContent }) =
     });
 
     const info = await smtpTransport.sendMail({
-      from: process.env.CRAWLER_MAIL_WT,
+      from: process.env.APP_MAIL_FROM,
       to: process.env.APP_MAIL_TO,
       subject,
       text,
