@@ -178,7 +178,7 @@ const logvisit = async function(req){
     }
   app.get('/', async (req, res) => {
     try {
-    const error = logvisit(req);
+    const error = await logvisit(req);
     if (error) {
       console.error('Supabase insert error:', error);
     } 
