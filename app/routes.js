@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const UAParser = require('ua-parser-js');
 const nodemailer = require('nodemailer');
 const nbhdConfig = require('../config/nbhd.json');
-const { aggregateVisit, visitLog , makeAggregatedVisitsCSV} = require('../utils/visitors');
+const {getAggregatedVisits} = require('../utils/visitors');
 require('dotenv').config();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_IPS = process.env.ADMIN_IPS;
@@ -15,12 +15,19 @@ const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 const LOCKOUT_TIME_MS = 15 * 60 * 1000; // 15 minutes
 
+//initialize supabase
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseUrl = process.env.DB_API_URL; // from dashboard
+const supabaseKey = process.env.SB_SK;    // your secret key, set securely in environment variables
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+
 if (!ADMIN_PASSWORD || !SECRET_HASH_SALT) {
   console.error('ERROR: ADMIN_PASSWORD and SECRET_HASH_SALT must be set in environment variables');
   process.exit(1);
 }
-
-const aggregatedVisits = {}; // aggregated stats keyed by time bucket ISO string
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -141,36 +148,45 @@ module.exports = function (app) {
     // es: 'Español',
     // zh: '中文'
   };
+const logvisit = async function(req){      
+      const ip = getIP(req);
+      const truncatedIp = truncateIP(ip);
+      const hashedId = hashIP(truncatedIp);
 
-  app.get('/',(req, res) => {
-  // app.get('/', (req, res) => {
-    const ip = getIP(req);
-    const truncatedIp = truncateIP(ip);
-    const hashedId = hashIP(truncatedIp);
+      const ua = req.headers['user-agent'] || '';
+      const parser = new UAParser(ua);
+      const browserName = parser.getBrowser().name || 'Other';
+      const osName = parser.getOS().name || 'Other';
 
-    const ua = req.headers['user-agent'] || '';
-    const parser = new UAParser(ua);
-    const browserName = parser.getBrowser().name || 'Other';
-    const osName = parser.getOS().name || 'Other';
+      const nbhdKey = req.query.nbhd || "all";
+      const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : null;
+      const currentLang = getCurrentLang(req);
+      const visit = {
+        hashedId,
+        browser: browserName,
+        os: osName,
+        lang: 'currentLang',
+        nbhd: nbhd,
+        time: new Date().toISOString()
+      };
 
-    const nbhdKey = req.query.nbhd || "all";
-    // Lookup the neighborhood object from your config
-    const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : null;
-    const currentLang = getCurrentLang(req);
-    const visit = {
-      hashedId,
-      browser: browserName,
-      os: osName,
-      lang: currentLang,
-      nbhd: nbhd,
-      time: new Date().toISOString()
-    };
-    visitLog.push(visit);
-    aggregateVisit(visit, 'minute');
-
+      // Log visit to Supabase table `visits`
+      const { error } = await supabase
+        .from('visits')
+        .insert([visit]);
+      return error;
+    }
+  app.get('/', async (req, res) => {
+    try {
+    const error = logvisit(req);
+    if (error) {
+      console.error('Supabase insert error:', error);
+    } 
+    const currentLang = getCurrentLang(req); 
     const t = makeT(currentLang);
-
-
+    const nbhdKey = req.query.nbhd || "all";
+    const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : null;
+      
     res.render('pages/aboutmap.ejs', {
       t,
       websiteName,
@@ -181,8 +197,12 @@ module.exports = function (app) {
       langTexts,
       neighborhood: nbhd  
     });
+      } catch (err) {
+    console.error('Error in / route:', err);
+    res.status(500).send('Internal Server Error');
+  }
   });
-  
+
 app.get('/ping', (req, res) => {
   res.sendStatus(200);
 });
@@ -227,4 +247,11 @@ app.get('/ping', (req, res) => {
     const currentLang = 'en'; // or add language param with getCurrentLang(req)
     res.render('pages/viewvisitor.ejs', { visits: visitLog });
   });
+app.get('/admin/aggregated-visits', passwordProtect, async (req, res) => {
+});
+app.post('/admin/aggregated-visits', passwordProtect, async (req, res) => {
+  const aggregatedData = await getAggregatedVisits();
+  res.json(aggregatedData);
+});
+
 };

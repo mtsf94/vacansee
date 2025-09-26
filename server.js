@@ -4,7 +4,6 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const { cleanOldLogs, aggregatedVisits } = require('./utils/visitors');
-const { sendStatsEmail } = require('./utils/email');
 const { SETPORT } = require('./config/constants');
 
 var PORT     = process.env.PORT || 8080;
@@ -29,6 +28,7 @@ app.use('/data', express.static(path.join(__dirname, 'data')));
 app.use(express.urlencoded({ extended: true }));
 
 require('./app/routes.js')(app);
+
 const cron = require('node-cron');
 
 // Run cleanOldLogs every hour on the hour, keeping old visit logs for 30 days max
