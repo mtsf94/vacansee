@@ -26,7 +26,7 @@ const translations = {
     "No owner file, nonvacant": "No owner file, nonvacant",
     "Complete file, vacant": "Complete file, vacant",
     'Block where 80%+ of properties filed returns':'Block where 80%+ of properties filed returns',
-    'Block where <80% of properties filed returns':'Block where <80% of properties filed returns' ,
+    'Block where less than 80% of properties filed returns':'Block where less than 80% of properties filed returns' ,
     "Block": "Block",
     "Building":"Building",
     'Legend (city %)':'Legend (city %)',

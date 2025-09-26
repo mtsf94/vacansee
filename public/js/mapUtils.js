@@ -1067,7 +1067,7 @@ function updateLegend(citywide, mode='block') {
     ],
     "blockfiling": [
       { var: "block-file", label: "Block where "+(blockThreshhold*100).toString()+"%+ of properties filed returns", fill: map_fill_partcomplete2 },
-      { var: "block-no-file", label: "Block where <"+(blockThreshhold*100).toString()+"% of properties filed returns", fill: map_fill_nofile }
+      { var: "block-no-file", label: "Block where less than"+(blockThreshhold*100).toString()+"% of properties filed returns", fill: map_fill_nofile }
     ],
     "filing-vacancy": [
       { var: "nonvacant", label: "Nonvacant", fill: map_fill_partcomplete1 },
