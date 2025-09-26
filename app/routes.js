@@ -166,7 +166,7 @@ const logvisit = async function(req){
         browser: browserName,
         os: osName,
         lang: 'currentLang',
-        nbhd: nbhd,
+        nbhd: nbhd.name,
         time: new Date().toISOString()
       };
 
