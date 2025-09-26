@@ -182,15 +182,11 @@ module.exports = function (app) {
       neighborhood: nbhd  
     });
   });
+  
+app.get('/ping', (req, res) => {
+  res.sendStatus(200);
+});
 
-  app.get('/ping', async (req, res) => {
-    try {
-        return res.sendStatus(200);
-    } catch (err) {
-      console.error('Status check failed:', err);
-      return res.status(500).json({ message: 'Ping failed', error: err.message });
-    }
-  });
 
   app.get('/embed/map', (req, res, next) => {
     res.setHeader('X-Frame-Options', 'ALLOWALL');
