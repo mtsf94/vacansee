@@ -10,7 +10,7 @@ const { SETPORT } = require('./config/constants');
 var PORT     = process.env.PORT || 8080;
 
 //update this to change the aggregation timeframe and to turn aggregation off
-const aggregateWord= 'minute';
+const aggregateWord= 'day';
 const performAggregation = true;
 
 const app = express();
@@ -19,7 +19,7 @@ app.set('trust proxy', true);
 app.set('views', path.join(__dirname, 'views'));
 
 const corsOptions = {
-  origin: '*', // Or specify your frontend domain like 'https://your-frontend.com'
+  origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -39,8 +39,6 @@ cron.schedule('* * * * *', () => {
 
 const aggregateWordLevel= aggregateWord+ '-level';
 
-console.log("check");
-console.log(aggregateWordLevel);
 let cronCommand = '* * * * *';
 
 if (aggregateWord === 'minute'){
@@ -59,14 +57,14 @@ if (aggregateWord === 'week'){
 if (performAggregation){ 
   // Run sendStatsEmail every hour on the hour (or change schedule as needed)
   cron.schedule(cronCommand, async () => {
-    try {
-      await sendStatsEmail(aggregateWord, aggregateWordLevel);
-      // Clear aggregatedVisits after emailing
-      Object.keys(aggregatedVisits).forEach(bucket => { delete aggregatedVisits[bucket]; });
-      console.log('Sent '+aggregateWordLevel+' stats email and cleared aggregation');
-    } catch (err) {
-      console.error('Error sending '+aggregateWordLevel+' stats email:', err);
-    }
+    // try {
+    //   await sendStatsEmail(aggregateWord, aggregateWordLevel);
+    //   // Clear aggregatedVisits after emailing
+    //   Object.keys(aggregatedVisits).forEach(bucket => { delete aggregatedVisits[bucket]; });
+    //   console.log('Sent '+aggregateWordLevel+' stats email and cleared aggregation');
+    // } catch (err) {
+    //   console.error('Error sending '+aggregateWordLevel+' stats email:', err);
+    // }
   });
  
 }
