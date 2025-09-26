@@ -32,7 +32,7 @@ require('./app/routes.js')(app);
 const cron = require('node-cron');
 
 // Run cleanOldLogs every hour on the hour, keeping old visit logs for 30 days max
-cron.schedule('* * * * *', () => {
+cron.schedule('0 0 * * *', () => {
   const deletedCount = cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000);
   console.log('Cleaned old logs - hourly cron job. Removed '+deletedCount+' logs.');
 });
