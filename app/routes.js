@@ -148,7 +148,7 @@ module.exports = function (app) {
     // es: 'Español',
     // zh: '中文'
   };
-const logvisit = async function(req){      
+const logvisit = async function(req, page= null){      
       const ip = getIP(req);
       const truncatedIp = truncateIP(ip);
       const hashedId = hashIP(truncatedIp);
@@ -166,7 +166,7 @@ const logvisit = async function(req){
         browser: browserName,
         os: osName,
         lang: 'currentLang',
-        nbhd: nbhd.name,
+        nbhd: page || nbhd.name,
         time: new Date().toISOString()
       };
 
@@ -223,6 +223,11 @@ app.get('/ping', (req, res) => {
   });
 
   app.get('/privacy', (req, res) => {
+    try {
+    const error = await logvisit(req, page="privacy");
+    if (error) {
+      console.error('Supabase insert error:', error);
+    } 
     const currentLang = getCurrentLang(req);
     const t = makeT(currentLang);
     res.render('pages/privacy_rev081225.ejs', {
