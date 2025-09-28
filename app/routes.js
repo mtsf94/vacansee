@@ -222,7 +222,7 @@ app.get('/ping', (req, res) => {
     });
   });
 
-  app.get('/privacy', (req, res) => {
+  app.get('/privacy', async (req, res) => {
     try {
     const error = await logvisit(req, page="privacy");
     if (error) {
@@ -238,7 +238,10 @@ app.get('/ping', (req, res) => {
       translationsForClient: translations[currentLang] || {},
       langTexts
   
-    });
+    });} catch (err) {
+    console.error('Error in / route:', err);
+    res.status(500).send('Internal Server Error');
+  }
   });
 
 
