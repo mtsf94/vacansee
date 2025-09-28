@@ -1,12 +1,20 @@
 //utils/visitors.js
+// Cleanup old raw logs (>30 days) in Supabase
+async function cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000) {
+  const cutoff = new Date(Date.now() - clean_after).toISOString();
 
-const { createClient } = require('@supabase/supabase-js');
+  const { data, error } = await supabase
+    .from('visits')
+    .delete()
+    .lt('time', cutoff);
 
-require('dotenv').config();
-const supabaseUrl = process.env.DB_API_URL; // from dashboard
-const supabaseKey = process.env.SB_SK;    // your secret key, set securely in environment variables
+  if (error) {
+    console.error('Error deleting old visits:', error);
+    return 0;
+  }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+  return data ? data.length : 0;
+}
 
 
 async function logVisitToSupabase(visit) {
@@ -34,6 +42,14 @@ async function getAggregatedVisits() {
 }
 
 module.exports = {
+  // visitLog,
+  // aggregatedVisits,
+  // getTimeBucket,
+  // cleanOldLogs,
+  // aggregateVisit,
+  // summarizeCounts,
+  // subtractBucket,
+  // makeAggregatedVisitsCSV,
   logVisitToSupabase,
   getAggregatedVisits
 };
