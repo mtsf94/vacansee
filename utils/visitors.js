@@ -45,7 +45,7 @@ module.exports = {
   // visitLog,
   // aggregatedVisits,
   // getTimeBucket,
-  // cleanOldLogs,
+  cleanOldLogs,
   // aggregateVisit,
   // summarizeCounts,
   // subtractBucket,

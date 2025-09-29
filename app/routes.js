@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const UAParser = require('ua-parser-js');
 const nodemailer = require('nodemailer');
 const nbhdConfig = require('../config/nbhd.json');
-const {getAggregatedVisits} = require('../utils/visitors');
+const {getAggregatedVisits, cleanOldLogs} = require('../utils/visitors');
 require('dotenv').config();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_IPS = process.env.ADMIN_IPS;
