@@ -1,21 +1,17 @@
 /*
-add_frontage.js
-
-This program takes an existing merged geoJSON file 
-and attempts to guess which coordinates of each property 
-are part of a street-facing side of the property, in order
-to create an unofficial estimate of the street frontage
-feet of the property
+merge_and_frontage.js
+This program merges GeoJSON parcels with tax data, and estimates street frontage using parcel boundaries
 */
 const fs = require('fs');
 const csv = require('csv-parser');
-
 const haversine = require('haversine-distance');
 const { chain } = require('stream-chain');
 const { parser } = require('stream-json');
 const { pick } = require('stream-json/filters/Pick');
 const { streamArray } = require('stream-json/streamers/StreamArray');
 
+
+//path to the relevant data files
 const geojsonPath = '../archive/archive_data/Parcels Active and Retired_20250612.geojson';
 const csvPath = '../data/Taxable_Commercial_Spaces_20250613.csv';
 const outputPath2 = '../data/parcels_with_frontage.geojson';
@@ -103,6 +99,7 @@ function processYearRows(yearRows) {
       ownerVals.push(filteredRest.entity || filteredRest.owner || 'OWNER');
     } else if ((filertype || '').trim().toUpperCase() === 'TENANT') {
       tenantVals.push('TENANT');
+      // for tenants and subtenants, excluding entity name from processed file
       // tenantVals.push(filteredRest.entity || filteredRest.tenant || 'TENANT');
     } else if ((filertype || '').trim().toUpperCase() === 'SUBTENANT') {
       tenantVals.push('SUBTENANT');
@@ -123,7 +120,6 @@ function processYearRows(yearRows) {
   for (const prop of PROPERTIES_TO_REMOVE) {
     delete baseRecord[prop];
   }
-
   return baseRecord;
 }
 
@@ -133,7 +129,6 @@ function pruneProperties(obj) {
     delete obj[prop];
   }
 }
-
 
 // Helper: get edges from feature geometry (returns {edges, indexMap})
 function getEdgesWithIndices(feature) {
@@ -172,7 +167,7 @@ async function mergeGeoJSONWithCSV() {
   const csvLookup = {};
   for (const row of csvRows) {
     const block = padBlock(String(row.block || '').trim());
-    //adding uppercase conversion here to handle inconsistent case between years
+    //adding uppercase conversion here to handle inconsistent uppercase vs lowercase across years
     const lot = padLot(String(row.lot || '').trim().toUpperCase());
     const key = `${block}-${lot}`;
     const year = String(row.taxyear).trim();
@@ -234,7 +229,7 @@ function getBlockKey(feature) {
     return acc;
   }, {});
 
-  // Calculate blk_filed and blk_total per block and year
+  // Calculate block statistics: blk_filed and blk_total per block and year
   const blockStats = {};
   for (const blk in blockGroups) {
     const featuresInBlock = blockGroups[blk];

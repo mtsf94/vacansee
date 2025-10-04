@@ -24,7 +24,7 @@ This open-source interactive map project visualizes San Francisco’s commercial
 
 ## How It Works
 
-- **Data:** Aggregates [open data from DataSF](https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data) and [block/lot information](https://data.sfgov.org/Geographic-Locations-and-Boundaries/San-Francisco-Addresses-with-Units-Enterprise-Addr/ramy-di5m/about_data) into a GeoJSON file. Estimates street frontage for each parcel, since the vacancy tax for each property is a multiple of the its street frontage, in feet. 
+- **Data:** Aggregates [open data from DataSF](https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data) and [block/lot information](https://data.sfgov.org/Geographic-Locations-and-Boundaries/San-Francisco-Addresses-with-Units-Enterprise-Addr/ramy-di5m/about_data) into a GeoJSON file. Estimates street frontage for each parcel, since the vacancy tax for each property is a multiple of the its street frontage, in feet. Files are processed using the program [here](/processdata/merge_and_frontage.js).
 - **Visualization:** Uses [MapLibre](https://maplibre.org/) to render the map and interactivity.
 
 --- 
