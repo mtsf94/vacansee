@@ -515,9 +515,12 @@ const updateMapForYear = (geojsonData, year, mode="block") => {
   hideLoading();
   document.getElementById('aboutmap-frame').classList.remove('hidden');
   // document.getElementById('navbar').classList.remove('hidden');
-  document.getElementById('navbar-left').classList.remove('hidden');
-  document.getElementById('footer').classList.remove('hidden');
-
+  if (document.getElementById('navbar-left')){
+    document.getElementById('navbar-left').classList.remove('hidden');
+  }
+  if (document.getElementById('footer')){
+    document.getElementById('footer').classList.remove('hidden');
+  }
   // Compute combinations for the currently visible features
   const currentYear = window.currentYear || "2022";
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;

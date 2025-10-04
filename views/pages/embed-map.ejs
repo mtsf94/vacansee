@@ -9,40 +9,66 @@
   <%- include('../partials/header') %>
 </head>
 <body> 
-    <div id="map-container">
-                <div id="year-timeline" class="year-timeline">
-                    <span class="year-tick" data-year="2022">2022</span>
-                    <span class="year-tick" data-year="2023">2023</span>
-                    <span class="year-tick" data-year="2024">2024</span>
-                    <button id="animate-timeline" class="animate-btn" title="Animate">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M17 1l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none"/>
-                            <path d="M21 5H13a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" fill="none"/>
-                            <path d="M7 23l-4-4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
-                            <path d="M3 19h8a7 7 0 1 0-7-7" stroke="currentColor" stroke-width="2" fill="none"/>
-                        </svg>
-                    </button>
-                </div>
-                <div id="aboutmap-map"></div>
-                <!-- <div id="map2"></div> -->
-                <div class = "embed-legend" id="legend-container">
-                     <div id="map-legend"></div>
-                </div> 
-                <div class = "embed-filter hidden" id="map-filter"></div>
-                <div id="map-legend-minimize" class="embed-minimize  map-legend-minimize hidden" >Legend + </div> 
-            </div>
-        </div>
         
+        <div id="map-and-about" >
+            <div id="aboutmap-frame" class="hidden">
+                <!-- Fullscreen button (diagonal arrows in) -->
+                <button class = "fullscreen-btn" id="aboutmap-fullscreen-btn" title="Full Screen">
+                <span>&#x2922;</span>
+                </button>
+                <!-- Exit fullscreen button (diagonal arrows out), hidden by default -->
+                <button class = "fullscreen-btn hidden" id="aboutmap-exit-btn" title="Exit Full Screen">
+                <span>&#x2922;</span>
+                </button>
+
+              
+                <div id="map-container">
+                    <div id="year-timeline" class="year-timeline">
+                        <span class="year-tick" data-year="2022">2022</span>
+                        <span class="year-tick" data-year="2023">2023</span>
+                        <span class="year-tick" data-year="2024">2024</span>
+                        <button id="animate-timeline" class="animate-btn" title="Animate">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M17 1l4 4-4 4" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M21 5H13a7 7 0 1 0 7 7" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M7 23l-4-4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M3 19h8a7 7 0 1 0-7-7" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="aboutmap" class="aboutmap"></div>
+                    <div class="legend-container" id="legend-container">
+                         <div id="map-legend"></div>
+                    </div> 
+                    <div id="map-filter" class="map-filter"></div>
+                    <div id="legend-minimize-container" class="hidden" ></div> 
+                    
+                </div>
+               
+                 <div id="tour-tooltip" class="hidden">
+                  <span id="tour-tooltip-text"></span>
+                  <div class="tour-control">
+                    <button id="tour-prev-btn" class="navbar-toggle"><%= t("Prev")%> </button>
+                    <button id="tour-next-btn" class="navbar-toggle"><%= t("Next")%> </button>
+                    <button id="tour-exit-btn" class="navbar-toggle "><%= t("Exit")%> </button>
+                  </div>
+                </div>
+
+       
         
         <div id="aria-live" role="status" aria-live="polite" style="position:absolute;left:-9999px;"></div>
     <%- include('../partials/footer') %>
 
-  <script>
-    window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
-    window.CURRENT_LANG = "<%= currentLang %>";
-    function t(key) { return window.TRANSLATIONS[key] || key; }
-  </script>
+   <script>
+        const neighborhood = <%- JSON.stringify(neighborhood) || 'null' %>;
+
+      window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
+      window.CURRENT_LANG = "<%= currentLang %>";
+      function t(key) {
+        return window.TRANSLATIONS[key] || key;
+      }
+    </script>
   <script src="/js/mapUtils.js"></script>
   <script src="/js/mapMain.js"></script>
 </body>

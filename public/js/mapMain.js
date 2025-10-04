@@ -25,6 +25,7 @@ let currentLang = 'en';
 let currentYearIdx = 0; //for year animation
 let animateInterval = null;
 
+const savedYear = localStorage.getItem('preferredYear') || "2022";  
 const map_fill_vac =            {'color': '#d64200', 'pattern': 'tmpoly-plus-100-black',                      'svg': 'tm-plus-100'};
 const map_fill_nofile =         {'color': '#767676', 'pattern': 'tmpoly-circle-light-100-black',              'svg': 'tm-circle-light-100' };
 const map_fill_complete =       {'color': '#27629C', 'pattern': 'tmpoly-grid-light-200-black',                'svg': 'tm-grid-light-200'  };
@@ -64,7 +65,7 @@ map.on('pitch', () => {
   const tourModal = document.getElementById('tour-modal');
 
 map.on('load', () => {
-  map.addSource('osm-tiles', {
+   map.addSource('osm-tiles', {
     type: 'raster',
     tiles: [
       'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -83,20 +84,24 @@ map.on('load', () => {
     minzoom: 0,
     maxzoom: 19
   });
-  document.getElementById('spinner-overlay').classList.add("hidden");
-  document.getElementById('loading-overlay').classList.remove("hidden");
+  if (tourModal){
+    document.getElementById('spinner-overlay').classList.add("hidden");
+    document.getElementById('loading-overlay').classList.remove("hidden");
+  } 
   fetchWithProgress(parcelsUrl, pct => {
       setProgress(pct * 0.8); // first 80% of bar for download
   })
   .then(parcelsData => {
       setProgress(90); // parsing done
-
+   
       hideLoading();     
-      if (localStorage.getItem('hideTourPrompt') === '1'){
+      if (tourModal){
+        if (localStorage.getItem('hideTourPrompt') === '1'){
         tourModal.classList.add("hidden");
-      }
-      else {
-        tourModal.classList.remove("hidden");
+        }
+        else {
+          tourModal.classList.remove("hidden");
+        }
       }
       window.parcelsData=parcelsData;
       const year = currentYear;
@@ -170,7 +175,6 @@ map.on('load', () => {
 
       // Get the selected year
       const yearSelect = document.getElementById('year-select');
-      const savedYear = localStorage.getItem('preferredYear') || "2022";
       window.currentYear=savedYear;
       const savedMode = localStorage.getItem('preferredMode') || "vacancy";
       if (savedYear && ['2022', '2023', '2024'].includes(savedYear)) {
@@ -192,8 +196,6 @@ map.on('load', () => {
       hideLoading();
     });
    
-  // Start on load
-  startParcelPopcorns();
 });
 
 // ===== Load Data & Select Year =====
@@ -251,16 +253,12 @@ map.on('zoom', () => {
 
 map.on('zoomend', () => {
   var outlineVisibility = map.getLayoutProperty('building-outline', 'visibility');
-  console.log("ZOO");
-  console.log(map.getZoom());
   if (map.getZoom() >= 14.5) {
     if (outlineVisibility !== 'visible') {
-      console.log("turn on");
       map.setLayoutProperty('building-outline', 'visibility', 'visible');
     }
   } else {
     if (outlineVisibility !== 'none') {
-      console.log("turn off");
       map.setLayoutProperty('building-outline', 'visibility', 'none');
     }
   }
@@ -313,16 +311,16 @@ if (fullscreenBtn || exitBtn){
       if (nav) nav.classList.add("hidden");
       if (footer) footer.classList.add("hidden");
       if (aboutText) aboutText.classList.add("hidden");
-      fullscreenBtn.classList.add("hidden");
-      exitBtn.classList.remove("hidden")
-      frame.classList.add("fullscreen");
+      if (fullscreenBtn) fullscreenBtn.classList.add("hidden");
+      if (exitBtn) exitBtn.classList.remove("hidden")
+      if (frame) frame.classList.add("fullscreen");
     } else {
       if (nav) nav.classList.remove("hidden");
       if (footer) footer.classList.remove("hidden");
       if (aboutText) aboutText.classList.remove("hidden");
-      fullscreenBtn.classList.remove("hidden");
-      exitBtn.classList.add("hidden")
-      frame.classList.remove("fullscreen");
+      if (fullscreenBtn) fullscreenBtn.classList.remove("hidden");
+      if (exitBtn) exitBtn.classList.add("hidden")
+      if (frame) frame.classList.remove("fullscreen");
     }
   });
 }
@@ -350,30 +348,32 @@ animateBtn.addEventListener('click', function() {
 document.querySelector('.year-tick[data-year="'+savedYear+'"]').classList.add('selected');
 
 // Hamburger menu toggle
-document.getElementById('tour-skip-btn').onclick = () => {
-   if (document.getElementById('tour-skip-remember').checked) {
-    localStorage.setItem('hideTourPrompt', '1');
-  }
-  if (isMobile()) {
-    flyTourDivToHamburger();
-  } else {
-    document.getElementById('tour-modal').classList.add('hidden'); 
-}};
+if (tourModal){
+  document.getElementById('tour-skip-btn').onclick = () => {
+     if (document.getElementById('tour-skip-remember').checked) {
+      localStorage.setItem('hideTourPrompt', '1');
+    }
+    if (isMobile()) {
+      flyTourDivToHamburger();
+    } else {
+      document.getElementById('tour-modal').classList.add('hidden'); 
+  }};
 
-document.getElementById('tour-next-btn').onclick = () => {
-  if (currentTourStep < tourSteps.length - 1) {
-    currentTourStep++;
-    showTourStep(currentTourStep);
-  }
-};
-document.getElementById('tour-prev-btn').onclick = () => {
-  if (currentTourStep > 0) {
-    currentTourStep--;
-    showTourStep(currentTourStep);
-  }
-};
-document.getElementById('tour-exit-btn').onclick = exitTour;
-
+  document.getElementById('tour-next-btn').onclick = () => {
+    if (currentTourStep < tourSteps.length - 1) {
+      currentTourStep++;
+      showTourStep(currentTourStep);
+    }
+  };
+  document.getElementById('tour-prev-btn').onclick = () => {
+    if (currentTourStep > 0) {
+      currentTourStep--;
+      showTourStep(currentTourStep);
+    }
+  };
+  document.getElementById('tour-exit-btn').onclick = exitTour;
+ 
+}
 document.addEventListener('DOMContentLoaded', function () {
   const hamburger = document.getElementById('navbar-hamburger');
   const actions = document.getElementById('top-banner-actions');
@@ -436,24 +436,26 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+if (tourModal){
 
-document.getElementById('tour-start-btn').addEventListener('click', () => {
-  localStorage.setItem('hideTourPrompt', document.getElementById('tour-skip-remember').checked ? '1' : '0');
-  
-  // Hide the hamburger menu if open (optional)
-  const hamburgerMenu = document.getElementById('navbar-hamburger');
-  if (hamburgerMenu && hamburgerMenu.getAttribute('aria-expanded') === 'true') {
-    hamburgerMenu.classList.add("hidden");
+  document.getElementById('tour-start-btn').addEventListener('click', () => {
+    localStorage.setItem('hideTourPrompt', document.getElementById('tour-skip-remember').checked ? '1' : '0');
+    
+    // Hide the hamburger menu if open (optional)
+    const hamburgerMenu = document.getElementById('navbar-hamburger');
+    if (hamburgerMenu && hamburgerMenu.getAttribute('aria-expanded') === 'true') {
+      hamburgerMenu.classList.add("hidden");
+    }
+    
+    document.getElementById('tour-modal').classList.add("hidden");
+    startTour();
+
+  });
+  if (nav){
+  document.getElementById('tour-start-btn-nav').addEventListener('click', () => {
+    document.getElementById('tour-skip-remember').checked = false;
+    localStorage.setItem('hideTourPrompt', '0');
+    tourModal.classList.remove("hidden");
+  });  
   }
-  
-  document.getElementById('tour-modal').classList.add("hidden");
-  startTour();
-
-});
-
-document.getElementById('tour-start-btn-nav').addEventListener('click', () => {
-  document.getElementById('tour-skip-remember').checked = false;
-  localStorage.setItem('hideTourPrompt', '0');
-  console.log("foff");
-  tourModal.classList.remove("hidden");
-});
+}

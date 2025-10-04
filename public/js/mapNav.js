@@ -20,7 +20,7 @@ const languageMenu = document.getElementById('language-menu');
 const currentLangText = document.getElementById('current-language');
 
 const savedLang = localStorage.getItem('preferredLang');
-const savedYear = localStorage.getItem('preferredYear') || "2022";
+
 if (savedLang && langArray.includes(savedLang)) {
   currentLang = savedLang;
   currentLangText.textContent = langTexts[savedLang] || langTexts['en'];

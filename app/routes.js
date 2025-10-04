@@ -214,11 +214,17 @@ app.get('/ping', (req, res) => {
   }, (req, res) => {
     const currentLang = getCurrentLang(req);
     const t = makeT(currentLang);
+      const nbhdKey = req.query.nbhd || "all";
+    const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : null;
+  
     res.render('pages/embed-map.ejs', {
       t,
       currentLang,
+      websiteName,
+      websiteNameMap,
       translationsForClient: translations[currentLang] || {},
-      langTexts
+      langTexts,
+      neighborhood: nbhd  
     });
   });
 
