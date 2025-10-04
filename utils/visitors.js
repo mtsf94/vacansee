@@ -1,6 +1,11 @@
 //utils/visitors.js
 // Cleanup old raw logs (>30 days) in Supabase
 async function cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000) {
+
+  const { createClient } = require('@supabase/supabase-js');
+  const supabaseUrl = process.env.DB_API_URL; 
+  const supabaseKey = process.env.SB_SK;  
+  const supabase = createClient(supabaseUrl, supabaseKey);
   const cutoff = new Date(Date.now() - clean_after).toISOString();
 
   const { data, error } = await supabase
