@@ -159,7 +159,9 @@ const logvisit = async function(req, page= null){
       const osName = parser.getOS().name || 'Other';
 
       const nbhdKey = req.query.nbhd || "all";
-      const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : null;
+      console.log("look");
+      console.log(nbhdConfig[nbhdKey]);
+      const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : {'name': 'all'};
       const currentLang = getCurrentLang(req);
       const visit = {
         hashedId,
