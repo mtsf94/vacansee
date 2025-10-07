@@ -415,12 +415,10 @@ fetch('js/vacanseestyle.json')
     document.getElementById('tour-exit-btn').onclick = exitTour;
    
   }
-  document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.getElementById('navbar-hamburger');
     const actions = document.getElementById('top-banner-actions');
 
     if (hamburger){
-
       hamburger.addEventListener('click', function () {
         actions.classList.toggle('show');
         actions.setAttribute('aria-expanded', 'true')
@@ -453,10 +451,10 @@ fetch('js/vacanseestyle.json')
     });
 
     // Fullscreen toggle
-    const frame = document.getElementById("aboutmap-frame");
+    // const frame = document.getElementById("aboutmap-frame");
     const btn = document.getElementById("aboutmap-fullscreen-btn");
-    const nav = document.getElementById("navbar");
-    const aboutText = document.getElementById("about-text");
+    // const nav = document.getElementById("navbar");
+    // const aboutText = document.getElementById("about-text");
     const exitFsBtn = document.getElementById("aboutmap-exit-btn");
     const fsBtn = ()=>{    
         frame.classList.toggle("fullscreen");
@@ -475,7 +473,7 @@ fetch('js/vacanseestyle.json')
         fsBtn();
       }); 
     }
-  });
+  // });
 
   if (tourModal){
 
