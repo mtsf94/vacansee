@@ -145,9 +145,9 @@ async function fetchWithProgress(url, onProgress) {
   }
   // Get total file size from headers (if available)
   let total = res.headers.get('Content-Length');
-  //hardcode total if the file was received compressed (i.e. smaller than 1MB as we know file is ~3MB)
+  //hardcode total if the file was received compressed (i.e. smaller than 1MB as we know file is ~5MB)
   if (total<1000000) {
-    total = 3000000;
+    total = 5000000;
   }
 
   //set up and read the data 

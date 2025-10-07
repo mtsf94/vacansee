@@ -92,7 +92,7 @@ fetch('js/vacanseestyle.json')
         layers: []
       },
       center: defaultCenter,
-      zoom: 13
+      zoom: 12
     });
 
   // map.style.sprite =  window.location.origin + "/img/sprites/polygons-sprite";
