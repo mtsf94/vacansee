@@ -1,3 +1,21 @@
+maplibregl.addProtocol('SparseVectorTiles', async (params, abortController) => {
+  const [z, x, y] = params.url.replace('SparseVectorTiles://', '').split('/');
+
+  const tileUrl = `https://cdn.vacansee.org/tiles/vectortiles/carto.streets/v1/${z}/${x}/${y}.mvt`;
+
+  const response = await fetch(tileUrl, { signal: abortController.signal });
+  if (!response.ok) {
+    // Handle 404/no tile by returning an empty vector tile buffer or throwing error
+    if (response.status === 404) {
+      // Return empty tile data (zero-length ArrayBuffer)
+      return { data: new ArrayBuffer(0) };
+    }
+    throw new Error(`Tile fetch error: ${response.statusText}`);
+  }
+  const buffer = await response.arrayBuffer();
+  return { data: buffer };
+});
+
 // ===== Constants =====
 const animation_duration = 1300; // ms
 let cloudFrontURL = "https://cdn.vacansee.org";
@@ -11,6 +29,7 @@ const allModes = [
     'filing-ownertenant'
   ];
 
+const maxZoom = 16.9;
 
 //set defaults values and arrays that will be used later
 let groupedFeatures = [];
@@ -62,28 +81,22 @@ if (neighborhood){
 fetch('js/vacanseestyle.json')
   .then(r => r.json())
   .then(style => {
-    style.sprite = window.location.origin + '/img/sprites/polygons-sprite';
+    // style.sprite = window.location.origin + '/img/sprites/polygons-sprite';
+
     const map = new maplibregl.Map({
       container: 'aboutmap',
-      style: style,
+      style: {
+        version: 8,
+        sprite: window.location.origin + "/img/sprites/polygons-sprite",
+        sources: {},
+        layers: []
+      },
       center: defaultCenter,
-      zoom: 12
+      zoom: 13
     });
-  // });
 
   // map.style.sprite =  window.location.origin + "/img/sprites/polygons-sprite";
 
-  map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
-
-  // Lock the pitch to 0 so map stays flat
-  map.setPitch(0);
-
-  // Optionally, prevent changing pitch:
-  map.on('pitch', () => {
-    if (map.getPitch() !== 0) {
-      map.setPitch(0);
-    }
-  });
 
 
   function createToggleHandlerGear(map) {
@@ -101,25 +114,35 @@ fetch('js/vacanseestyle.json')
   map.on('load', () => {
      
     //  commenting out old tiles for now
-    //  map.addSource('osm-tiles', {
-    //   type: 'raster',
-    //   tiles: [
-    //     'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    //     'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    //     'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-    //   ],
-    //   tileSize: 256,
-    //   attribution: '© OpenStreetMap contributors'
-    // });
-    // map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+     map.addSource('osm-tiles', {
+      type: 'raster',
+      tiles: [
+        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors'
+    });
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
 
-    // map.addLayer({
-    //   id: 'osm-tiles',
-    //   type: 'raster',
-    //   source: 'osm-tiles',
-    //   minzoom: 0,
-    //   maxzoom: 19
-    // });
+  // Lock the pitch to 0 so map stays flat
+  map.setPitch(0);
+
+  // Optionally, prevent changing pitch:
+  map.on('pitch', () => {
+    if (map.getPitch() !== 0) {
+      map.setPitch(0);
+    }
+  });
+    map.addLayer({
+      id: 'osm-tiles',
+      type: 'raster',
+      source: 'osm-tiles',
+      paint: {
+        'raster-saturation': -.8 // grayscale effect
+      }
+    });
     if (tourModal){
       document.getElementById('spinner-overlay').classList.add("hidden");
       document.getElementById('loading-overlay').classList.remove("hidden");
@@ -292,6 +315,11 @@ fetch('js/vacanseestyle.json')
   });
 
   map.on('zoomend', () => {
+    console.log(map.getZoom());
+    if (map.getZoom() > maxZoom) {
+      map.zoomTo(maxZoom);
+    }
+
     var outlineVisibility = map.getLayoutProperty('building-outline', 'visibility');
     if (map.getZoom() >= 14.5) {
       if (outlineVisibility !== 'visible') {

@@ -6,7 +6,9 @@
   "sources": {
     "carto": {
       "type": "vector",
-      "url": "https://cdn.vacansee.org/tiles/vector/carto.streets/v1/tiles.json"
+      "tiles": ["SparseVectorTiles://{z}/{x}/{y}"],
+      "minzoom": 0,
+      "maxzoom": 14
     }
   },
   "sprite": "/img/sprites/polygons-sprite", 
