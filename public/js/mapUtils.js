@@ -1033,6 +1033,8 @@ function addMapLegend(map, currentYear) {
       legendMinContainer.classList.toggle('hidden');
     })
   );
+  settingsToggle
+  settingsToggle.addEventListener('click',toggleFilterContainer);
   toggleGear.addEventListener('click',toggleFilterContainer);
 }
 
