@@ -1664,6 +1664,7 @@ function makeExitTour(map) {
       item.classList.remove('dimmed');
       item.classList.remove('highlighted');
     });
+    mapLegend.classList.remove('hidden');
 
     if (window.matchMedia("(max-width: 1050px)").matches || window.matchMedia("(max-width: 1050px) and (orientation: landscape)").matches){
       document.getElementById('navbar').classList.remove("hidden");
