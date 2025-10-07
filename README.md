@@ -47,6 +47,16 @@ Just copy and paste this code:
 </iframe>
 
 ```
+---
+
+## Changelog
+
+### 2025-10-07
+- Updating map style to use Positron
+- Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20251007.geojson), which includes 5,103 parcels at this time. 
+
+### 2025-06-12
+- Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20250612.geojson), which includes 2,881 parcels at this time.
 
 ---
 

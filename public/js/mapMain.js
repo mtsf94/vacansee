@@ -372,7 +372,7 @@ fetch('js/vacanseestyle.json')
   document.querySelectorAll('.year-tick').forEach((tick, idx) => {
     tick.addEventListener('click', function() {
       stopAnimation();
-      selectYear(idx);
+      selectYear(map, idx);
     });
   });
 

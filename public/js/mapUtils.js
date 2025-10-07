@@ -1330,6 +1330,8 @@ function startAnimation(map) {
 }
 
 function stopAnimation() {
+
+  const animateBtn = document.getElementById('animate-timeline');
   animateBtn.classList.remove('active');
   animateBtn.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -1347,7 +1349,8 @@ function stopAnimation() {
 function selectYear(map, idx) {
   const activeTab = document.querySelector('.mode-tab.active');
   const mode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
-
+  console.log(years);
+  console.log("foh")
   document.querySelectorAll('.year-tick').forEach(t => t.classList.remove('selected'));
   document.querySelector(`.year-tick[data-year="${years[idx]}"]`).classList.add('selected');
   window.currentYear = years[idx];
@@ -1683,7 +1686,8 @@ function makeExitTour(map) {
 }
 
 // ===== Click/Touch/Hover Map =====
-const handleMapTap = e => {
+const handleMapTap = (e,map) => {
+  // return function(e => {
    stopParcelPopcorns();
 
     // Hide the hamburger menu if open (optional)
@@ -1721,6 +1725,7 @@ const handleMapTap = e => {
       window.neighborhoodPinPopup = null;
     }
   }
+// })
 };
 
 // ===== Manage Persistent Popups =====
