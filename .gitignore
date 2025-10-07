@@ -4,3 +4,4 @@ process_data
 archive
 views/pages/privacy.ejs
 data/*.csv
+data/*.zip
