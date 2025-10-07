@@ -12,8 +12,12 @@ const { streamArray } = require('stream-json/streamers/StreamArray');
 
 
 //path to the relevant data files
+//source:  https://data.sfgov.org/Geographic-Locations-and-Boundaries/Parcels-Active-and-Retired/acdm-wktn
 const geojsonPath = '../archive/archive_data/Parcels Active and Retired_20250612.geojson';
+
+//source: https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data
 const csvPath = '../data/Taxable_Commercial_Spaces_20250613.csv';
+// const csvPath = '../data/Taxable_Commercial_Spaces_20251007.csv';
 const outputPath2 = '../data/parcels_with_frontage.geojson';
 
 // Reduce ending file size by dropping some properties from feature.properties and/or each vacancy_by_year entry
