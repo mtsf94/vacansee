@@ -7,7 +7,6 @@
   },
   "main": "index.js",
   "dependencies": {
-    "@mapbox/tile-reduce": "^3.3.1",
     "@supabase/supabase-js": "^2.58.0",
     "@turf/turf": "^7.2.0",
     "axios": "^1.12.2",
