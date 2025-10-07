@@ -84,7 +84,7 @@ const translations = {
     "Skip": "Skip",
    "Welcome! Would you like to take a tour of the map?":"Welcome! Would you like to take a tour of the map?",
    "Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.":"Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.",
-   "Since 2022, San Francisco has had a tax on keeping certain commercial space vacant.":"Since 2022, San Francisco has had a tax on keeping certain commercial space vacant.", 
+   "Since 2022, San Francisco has had a tax, passed as Prop D, on keeping certain commercial space vacant.":"Since 2022, San Francisco has had a tax, passed as Prop D, on keeping certain commercial space vacant.",
    "Zoom into a neighborhood to explore a building-level map.": "Zoom into a neighborhood to explore a building-level map.",
     "This legend explains the map's colors and symbols.": "This legend explains the map's colors and symbols.",
     "In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.":"In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.",

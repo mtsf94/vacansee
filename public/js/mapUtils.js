@@ -1362,7 +1362,7 @@ const websiteName = "VacanSee";
 const websiteNameMap = "the VacanSee map";
 // Reusable text strings
 let textWelcome = t("Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.");
-let textWelcome2 = t("Since 2022, San Francisco has had a tax on keeping certain commercial space vacant.");
+let textWelcome2 = t("Since 2022, San Francisco has had a tax, passed as Prop D, on keeping certain commercial space vacant.");
 let textZoomToBuildings = t("Zoom into a neighborhood to explore a building-level map.");
 let textLegend = t("This legend explains the map's colors and symbols.");
 let textBuildingComplete= t("In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.");
