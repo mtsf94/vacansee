@@ -7,7 +7,6 @@ const langTexts = {
   zh: '中文'
 };
 
-
 // Generate langArray from langTexts
 const langArray = Object.keys(langTexts);
 const langArrayMinusEn = langArray.filter(code => code !== 'en');

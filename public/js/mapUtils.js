@@ -56,7 +56,7 @@ const groupHasFiled = (group, year) =>
 const groupHasVacant = (group, year) =>
   group.some(f => (f.properties.vacancy_by_year?.[year]?.vacant).trim().toUpperCase() === 'YES');
 
-const groupHasNonVacant = (group, year) =>
+const groupHasoccupied = (group, year) =>
   group.some(f => (f.properties.vacancy_by_year?.[year]?.vacant).trim().toUpperCase() === 'NO');
 
 const makeBlockFilingIndicator = (f,year, threshhold) =>{
@@ -84,14 +84,14 @@ const makeGroupVacancyIndicator = (group, year, mode) => {
 
     case 'filing-vacancy': {
       if (groupHasVacant(group, year)) return 'vacant';
-      if (groupHasNonVacant(group, year)) return 'nonvacant';
+      if (groupHasoccupied(group, year)) return 'occupied';
       return groupHasFiled(group, year) ? 'file' : 'no-file';
     }
 
     case 'filing-ownertenant-vacancy': {
       if (!hasOwner && hasTenant) return 'tenant-only';
       if (hasOwner && !hasTenant && hasVacant) return 'owner-only-vacant';
-      if (hasOwner && !hasTenant && !hasVacant) return 'owner-only-nonvacant';
+      if (hasOwner && !hasTenant && !hasVacant) return 'owner-only-occupied';
       if (hasOwner && hasTenant) return 'complete-file';
       return groupHasFiled(group, year) ? 'file' : 'no-file';
     }
@@ -119,7 +119,7 @@ const makeVacancyIndicator = (f, year, currentMode) => {
   }
 
   else if (currentMode === 'filing-vacancy') {
-    return vacant ? 'vacant' : 'nonvacant';
+    return vacant ? 'vacant' : 'occupied';
   }
 
   else if (currentMode === 'filing-ownertenant') {
@@ -131,7 +131,7 @@ const makeVacancyIndicator = (f, year, currentMode) => {
   else if (currentMode === 'filing-ownertenant-vacancy') {
     if (owner && tenant) return 'complete-file';
     if (tenant && !owner) return 'tenant-only';
-    if (owner && !tenant) return vacant ? 'owner-only-vacant' : 'owner-only-nonvacant';
+    if (owner && !tenant) return vacant ? 'owner-only-vacant' : 'owner-only-occupied';
   }
   else return 'no-file';
 };
@@ -198,6 +198,7 @@ const setProgress = pct =>{
 
 // ===== Map Functions =====
 const removeLayersForSource = (map, sourceId) => {
+
   (map.getStyle().layers || []).forEach(layer => {
     if (layer.source === sourceId && map.getLayer(layer.id)) map.removeLayer(layer.id);
   });
@@ -229,14 +230,14 @@ const getFillExpression = function(currentMode){
   else if (currentMode === 'filing-vacancy') {
     fillColor = [
       'case', 
-      ['==', ['get', 'groupStatus'], 'nonvacant'], map_fill_partcomplete1.color,
+      ['==', ['get', 'groupStatus'], 'occupied'], map_fill_partcomplete1.color,
       ['==', ['get', 'groupStatus'], 'vacant'], map_fill_vac.color,
       ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color,
       /* else */ map_fill_nofile.color
     ];
     fillPattern = [
        'case', 
-      ['==', ['get', 'groupStatus'], 'nonvacant'], map_fill_partcomplete1.pattern,
+      ['==', ['get', 'groupStatus'], 'occupied'], map_fill_partcomplete1.pattern,
       ['==', ['get', 'groupStatus'], 'vacant'], map_fill_vac.pattern,
       ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern,
       /* else */ map_fill_nofile.pattern
@@ -264,7 +265,7 @@ const getFillExpression = function(currentMode){
     fillColor = [
       'case', 
       ['==', ['get', 'groupStatus'], 'tenant-only'], map_fill_partcomplete1.color,
-      ['==', ['get', 'groupStatus'], 'owner-only-nonvacant'], map_fill_partcomplete2.color,
+      ['==', ['get', 'groupStatus'], 'owner-only-occupied'], map_fill_partcomplete2.color,
       ['==', ['get', 'groupStatus'], 'owner-only-vacant'], map_fill_vac.color,
       ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.color,
       ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color,
@@ -273,7 +274,7 @@ const getFillExpression = function(currentMode){
     fillPattern = [
       'case', 
       ['==', ['get', 'groupStatus'], 'tenant-only'], map_fill_partcomplete1.pattern,
-      ['==', ['get', 'groupStatus'], 'owner-only-nonvacant'], map_fill_partcomplete2.pattern,
+      ['==', ['get', 'groupStatus'], 'owner-only-occupied'], map_fill_partcomplete2.pattern,
       ['==', ['get', 'groupStatus'], 'owner-only-vacant'], map_fill_vac.pattern,
       ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.pattern,
       ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern,
@@ -313,7 +314,7 @@ const polygonToSVG = (feature, currentMode = "test", vacancy_indicator = 'presen
       'no-file': map_fill_nofile
     },
     'filing-vacancy': {
-      'nonvacant': map_fill_partcomplete1,
+      'occupied': map_fill_partcomplete1,
       'vacant': map_fill_vac,
       'no-file': map_fill_nofile
     },
@@ -326,7 +327,7 @@ const polygonToSVG = (feature, currentMode = "test", vacancy_indicator = 'presen
     'filing-ownertenant-vacancy': {
       'complete-file': map_fill_complete,
       'tenant-only': map_fill_partcomplete1,
-      'owner-only-nonvacant': map_fill_partcomplete2,
+      'owner-only-occupied': map_fill_partcomplete2,
       'owner-only-vacant': map_fill_vac,
       'no-file': map_fill_nofile
     }
@@ -472,9 +473,8 @@ function announce(msg) {
   document.getElementById('aria-live').textContent = msg;
 }
 
-const updateMapForYear = (geojsonData, year, mode="block") => {
+const updateMapForYear = (map, geojsonData, year, mode="block") => {
   // showLoading(`${t("Loading year")} ${year}. ${t("One moment")}`);
-
   // Call announce() after major updates
   announce(`${t("Map updated for year")} ${year}`);
 
@@ -526,7 +526,7 @@ const updateMapForYear = (geojsonData, year, mode="block") => {
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;
   const showCitywide = true;
   clearAllPersistentPopups();
-  updateLegend(citywideStats, mode) ;
+  updateLegend(map, citywideStats, mode) ;
   return allFeatures;
 };
 
@@ -537,7 +537,7 @@ const clearAllTooltips = () => {
   if (window.hoverPopup) { window.hoverPopup.remove(); window.hoverPopup = null; }
  };
 
-const showPopup = (groupedFeature , makePersistent=false) =>{
+const showPopup = (map, groupedFeature , makePersistent=false) =>{
   //remove any other hover popups, then add this one
   if (window.hoverPopup) window.hoverPopup.remove();
   
@@ -737,8 +737,8 @@ function computeCitywideStats(features, year) {
       let dollars = 0;
       let owner = null, tenant = null, rate = null, frontage = null;
 
-      // Only tax 'owner-only' (vacant or nonvacant) and 'no-file'
-      if (['owner-only','owner-only-vacant','owner-only-nonvacant','no-file'].includes(indicator)) {
+      // Only tax 'owner-only' (vacant or occupied) and 'no-file'
+      if (['owner-only','owner-only-vacant','owner-only-occupied','no-file'].includes(indicator)) {
         // Defensive checks
         const rec = f?.properties?.vacancy_by_year?.[year];
         frontage = Number(f?.properties?.street_frontage_ft);
@@ -855,7 +855,7 @@ const filterOptions = {
   ]
 };
 
-function switchTab(mode) {
+function switchTab(map, mode) {
   // Save current tab's state
   const activeTab = document.querySelector('.mode-tab.active');
   const useMode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
@@ -864,11 +864,10 @@ function switchTab(mode) {
   document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
   document.getElementById(`tab-${mode}`).classList.add('active');
   checkboxesDiv.innerHTML = '';
-  buildCheckboxes(mode);
-  settingsUpdated();
+  buildCheckboxes(map, mode);
 }
 
-function buildCheckboxes(mode) {
+function buildCheckboxes(map, mode) {
   checkboxesDiv.innerHTML = ''; 
   filterOptions[mode].forEach((opt, idx) => {
     const label = el({ tag: 'label', class: 'switch-label' });
@@ -904,7 +903,7 @@ function buildCheckboxes(mode) {
         tabStates[otherMode]['pattern'] = checkbox.checked;
       }
 
-      settingsUpdated();
+      settingsUpdated(map);
     });
 
     const slider = el({ tag: 'span', class: 'slider round' });
@@ -935,12 +934,11 @@ const tabStates = {
   block: {}
 };
 
-function settingsUpdated() {
+function settingsUpdated(map) {
   const activeTab = document.querySelector('.mode-tab.active');
   const mode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
 
   const visibleCheckboxes = document.querySelectorAll('#legend-checkboxes input[type="checkbox"]');
-
   const checkedIds = Array.from(visibleCheckboxes)
     .filter(cb => cb.checked)
     .map(cb => cb.id);
@@ -952,15 +950,20 @@ function settingsUpdated() {
   const modeParts = checkedIds.filter(id => !['pattern', 'citywide'].includes(id));
   // modeParts.sort(); // Optional: sort for consistent mode strings like "filing" vs "vacancy-filing"
   currentMode = modeParts.join('-');
-  const useYear = localStorage.getItem('preferredYear') || "2022";
-  allFeatures = updateMapForYear(window.currentData, useYear, mode);
+    const useYear = localStorage.getItem('preferredYear') || "2022";
+  allFeatures = updateMapForYear(map, window.currentData, useYear, mode);
   return {showCitywide, showPattern};
 }
 const checkboxesDiv = el({ tag: 'div', class: 'legend-checkboxes', id: 'legend-checkboxes' });
   
 const mapLegend = document.getElementById('map-legend');
   
-function addMapLegend(currentYear) {
+const filterContainer = document.getElementById('map-filter');
+function toggleFilterContainer() {
+  filterContainer.classList.toggle('hidden');
+}
+let gearElement = null;
+function addMapLegend(map, currentYear) {
   const legendContainer = document.getElementById('legend-container');
   const legendMinContainer = document.getElementById('legend-minimize-container');
   if (!mapLegend) return;
@@ -973,6 +976,7 @@ function addMapLegend(currentYear) {
     id: 'checkbox-toggle',
     innerHTML: `<div id="settings-gear" class="gear">\u2699</div>`
   });
+  gearElement=toggleGear;
   const toggleLegend = el({
     tag: 'div',
     class: 'map-toggle',
@@ -1013,15 +1017,15 @@ function addMapLegend(currentYear) {
     });
     tab.tabIndex = 0;
     tab.setAttribute('role', 'button');
-    tab.addEventListener('click', () => switchTab(modeKey));
+    tab.addEventListener('click', () => switchTab(map, modeKey));
     tabContainer.appendChild(tab);
   });
 
   filterContainer.append(tabContainer, checkboxesDiv);
   filterContainer.classList.add('hidden');
 
-  //initialize to show blocks
-  buildCheckboxes('block');
+  //initialize to show buildings
+  buildCheckboxes(map, 'building');
 
   ['legend-minimized', 'legend-maximized'].forEach(id =>
     document.getElementById(id)?.addEventListener('click', () => {
@@ -1029,18 +1033,8 @@ function addMapLegend(currentYear) {
       legendMinContainer.classList.toggle('hidden');
     })
   );
-
-  settingsToggle.addEventListener('click', () => {
-    filterContainer.classList.add('hidden');
-  });
-
-  toggleGear.addEventListener('click', () => toggleFilterContainer(filterContainer));
-
+  toggleGear.addEventListener('click',toggleFilterContainer);
 }
-
-  function toggleFilterContainer(obj) {
-    obj.classList.toggle('hidden');
-  }
 
 function saveCurrentTabState(mode) {
   Array.from(checkboxesDiv.querySelectorAll('input[type="checkbox"]')).forEach(cb => {
@@ -1049,10 +1043,12 @@ function saveCurrentTabState(mode) {
 }
 
 const prefYear = localStorage.getItem('preferredYear') || "2022";
-addMapLegend(prefYear);
 
-function updateLegend(citywide, mode='block') {
+function updateLegend(map, citywide, mode='building') {
+
   if (!citywide) return;
+
+  // addMapLegend(map, prefYear) 
   const legendTitleText = document.getElementById('legend-title-text');
   if (!mapLegend) return;
   legendTitleText.innerHTML = t(`Legend`)+(showCitywide ? t(` (city %)`):``);
@@ -1069,31 +1065,31 @@ function updateLegend(citywide, mode='block') {
       { var: "no-file", label: "Did not file", fill: map_fill_nofile }
     ],
     "blockfiling": [
-      { var: "block-file", label: "Block where "+(blockThreshhold*100).toString()+"%+ of properties filed returns", fill: map_fill_partcomplete2 },
-      { var: "block-no-file", label: "Block where less than "+(blockThreshhold*100).toString()+"% of properties filed returns", fill: map_fill_nofile }
+      { var: "block-file", label: "Block where "+(blockThreshhold*100).toString()+"%+ of properties reported vacancy status", fill: map_fill_partcomplete2 },
+      { var: "block-no-file", label: "Block where less than "+(blockThreshhold*100).toString()+"% of properties reported vacancy status", fill: map_fill_nofile }
     ],
     "filing-vacancy": [
-      { var: "nonvacant", label: "Nonvacant", fill: map_fill_partcomplete1 },
-      { var: "vacant", label: "Vacant", fill: map_fill_vac },
+      { var: "occupied", label: "'Occupied'", fill: map_fill_partcomplete1 },
+      { var: "vacant", label: "'Vacant'", fill: map_fill_vac },
       { var: "no-file", label: "Did not file", fill: map_fill_nofile }
     ],
     "filing-ownertenant": [
-      { var: "owner-only", label: "No tenant file, nonvacant", fill: map_fill_vac},
-      { var: "tenant-only", label: "No owner file", fill: map_fill_partcomplete2 },
+      { var: "owner-only", label: "'Occupied': Missing tenant", fill: map_fill_vac},
+      { var: "tenant-only", label: "Missing owner", fill: map_fill_partcomplete2 },
       { var: "complete-file", label: "Complete file", fill:map_fill_complete},
       { var: "no-file", label: "Did not file", fill: map_fill_nofile}
     ],
     "filing-ownertenant-vacancy": [
-      { var: "complete-file", label: "Complete file, nonvacant", fill: map_fill_complete },
-      { var: "owner-only-vacant", label: "Complete file, vacant", fill: map_fill_vac },
-      { var: "tenant-only", label: "No owner file, nonvacant", fill: map_fill_partcomplete1},
-      { var: "owner-only-nonvacant", label: "No tenant file, nonvacant", fill: map_fill_partcomplete2 },
+      { var: "complete-file", label: "'Occupied': complete file", fill: map_fill_complete },
+      { var: "owner-only-vacant", label: "'Vacant': complete file", fill: map_fill_vac },
+      { var: "tenant-only", label: "'Occupied': missing owner", fill: map_fill_partcomplete1},
+      { var: "owner-only-occupied", label: "'Occupied': missing tenant", fill: map_fill_partcomplete2 },
       { var: "no-file", label: "Did not file", fill: map_fill_nofile }
     ]
   };
-
   // Use currentMode and currentYear from your global/app context
   if (citywide[currentMode] && citywideLabels[currentMode]) {
+
     citywideLabels[currentMode].forEach(item => {
       // Get the proportion from citywide data, default to 0 if missing
       let pct = citywide[currentMode][item.var]["pct"] || 0;
@@ -1127,6 +1123,7 @@ function updateLegend(citywide, mode='block') {
       // Assemble and append
       itemDiv.appendChild(swatch);
       itemDiv.appendChild(labelSpan);
+
       legendItems.appendChild(itemDiv);
     });
   }
@@ -1321,14 +1318,14 @@ function makeDraggable(element, containerSelector = "#map-container") {
 
 const years = ['2022', '2023', '2024'];
 //functions to help with animating across years
-function startAnimation() {
+function startAnimation(map) {
 
   stopParcelPopcorns();
   animateBtn.classList.add('active');
   animateBtn.textContent = 'Stop';
   animateInterval = setInterval(() => {
     currentYearIdx = (currentYearIdx + 1) % years.length;
-    selectYear(currentYearIdx);
+    selectYear(map, currentYearIdx);
   }, 2000); // 2 seconds per year
 }
 
@@ -1347,7 +1344,7 @@ function stopAnimation() {
   animateInterval = null;
 }
 
-function selectYear(idx) {
+function selectYear(map, idx) {
   const activeTab = document.querySelector('.mode-tab.active');
   const mode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
 
@@ -1357,33 +1354,34 @@ function selectYear(idx) {
 
   localStorage.setItem('preferredYear', years[idx]);
 
-    allFeatures = updateMapForYear(window.currentData, years[idx],mode);
+    allFeatures = updateMapForYear(map, window.currentData, years[idx],mode);
 }
 
 
 const websiteName = "VacanSee";
 const websiteNameMap = "the VacanSee map";
 // Reusable text strings
-let textWelcome = t("Welcome! VacanSee explores San Francisco's commercial vacancy tax data.");
+let textWelcome = t("Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.");
 let textWelcome2 = t("Since 2022, San Francisco has had a tax on keeping certain commercial space vacant.");
-let textZoomToBlocks = t("Zoom into a neighborhood to explore a block-by-block map.");
+let textZoomToBuildings = t("Zoom into a neighborhood to explore a building-level map.");
 let textLegend = t("This legend explains the map's colors and symbols.");
-let textBlockFiled = t("On some blocks, at least ")+(blockThreshhold*100).toString()+"%"+t(" of commercial properties filed any of the required vacancy tax returns.");
-let textBlockNoFile = t("On other blocks, less than ")+(blockThreshhold*100).toString()+"%" +t(" of properties filed returns.");
+let textBuildingComplete= t("In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.");
+let textBuildingNoneFiled = t("In other properties, no returns were filed at all.");
 let textGear = t("Click this gear to open the settings menu.");
 let textSettings = t("Use the settings menu to:\n change the map's appearance.");
-let textChangeToBuildings = t("Use the settings menu to:\n map building information instead of blocks.");
+let textChangeToBlocks = t("Use the settings menu to:\n map block-level statistics instead of buildings.");
+let textChangeBackToBuildings = t("Use the settings menu to:\n change back to a building-level map.");
 let textAddPattern = t("Use the settings menu to:\n add patterns for improved accessibility.");
 let textDisplayAverage = t("Use the settings menu to:\n display citywide averages in the legend.");
 let textChangeFeatures = t("Use the settings menu to:\n change which features appear on the map.");
-let textTimeline = t("Use the timeline above the map to view data for different years.");
+let textTimeline = t("Use the timeline above the map to:\n view data for different years.");
+let textTimeline2 = t("Use the timeline above the map to:\n change the year.");
 let textPropertyDetails = t("Click on any property for more details.");
 let textDone = t("That's it! Now you can explore the map");
 
 // Reusable map center/zoom configurations
-let mapDefault = { center: [-122.42, 37.77], zoom: 13, bearing: 0, pitch: 0 };
+let mapDefault = { center: [-122.42, 37.77], zoom: 12, bearing: 0, pitch: 0 };
 let mapZoomedNeighborhood = { center: [-122.4775311897324, 37.779998143], zoom: 16 };
-let mapOutZoom = { center: [-122.42, 37.77], zoom: 12 };
 
 if (neighborhood.name != "all"){
   mapDefault.center = [neighborhood.longitude, neighborhood.latitude];
@@ -1399,7 +1397,7 @@ const tourSteps = [
   },
   { text: textWelcome2  },
   {
-    text: textZoomToBlocks,
+    text: textZoomToBuildings,
     map: mapZoomedNeighborhood,
     // highlight: "#aboutmap"
   },
@@ -1407,8 +1405,8 @@ const tourSteps = [
     text: textLegend,
     highlight: "#map-legend"
   },
-  { text: textBlockFiled  },
-  { text: textBlockNoFile  },
+  { text: textBuildingComplete  },
+  { text: textBuildingNoneFiled  },
   {
     text: textGear,
     highlight: "#settings-gear"
@@ -1417,7 +1415,8 @@ const tourSteps = [
     text: textSettings,
     highlight: "#map-filter"
   },
-  { text: textChangeToBuildings},
+  { text: textChangeToBlocks},
+  { text: textChangeBackToBuildings,},
   { text: textAddPattern, },
   { text: textDisplayAverage, },
   { text: textChangeFeatures},
@@ -1426,17 +1425,18 @@ const tourSteps = [
     map: mapZoomedNeighborhood,
     highlight: "#year-timeline"
   },
+  { text: textTimeline2},
   {
     text: textPropertyDetails,
     map: mapZoomedNeighborhood
   },
   {
     text: textDone,
-    map: mapOutZoom
+    map: mapDefault
   },
 ];
 
-function startTour() {
+function startTour(map) {
   currentTourStep = 0;
 
   if (window.matchMedia("(max-width: 1050px)").matches || window.matchMedia("(max-width: 1050px) and (orientation: landscape)").matches){
@@ -1449,9 +1449,9 @@ function startTour() {
   document.getElementById('legend-container').classList.remove("hidden");
   document.getElementById('legend-minimize-container').classList.add("hidden");
  
-  showTourStep(currentTourStep);
+  showTourStep(map, currentTourStep);
 }
-function showTourStep(stepIndex) {
+function showTourStep(map, stepIndex) {
   const step = tourSteps[stepIndex];
   document.getElementById('tour-tooltip-text').innerText = step.text;
     
@@ -1485,8 +1485,8 @@ function showTourStep(stepIndex) {
 
   // Remove previous listeners if any
   const gear = document.querySelector("#settings-gear");
-  if (gear) {
-    gear.onclick = null;
+  if (gearElement) {
+    gearElement.onclick = null;
   }
 
   // Property info step
@@ -1494,7 +1494,7 @@ function showTourStep(stepIndex) {
   const legendItems = legendItemsContainer.querySelectorAll('.legend-item');
   const citywide = document.getElementById('citywide');
   const pattern = document.getElementById('pattern');
-  const filterContainer = document.getElementById('map-filter');
+  // const filterContainer = document.getElementById('map-filter');
   const ownertenant = document.getElementById('ownertenant');
   const vacancy = document.getElementById('vacancy');
   const resetAndHighlight = (legendItems, targetItemID)=>{
@@ -1532,11 +1532,11 @@ function showTourStep(stepIndex) {
     }
 
   if (step.text === textWelcome){
-   switchTab('block');
+   // switchTab(map, 'building');
+    mapLegend.classList.add('hidden');
   }
   // Settings (gear) step
   if (step.text === textGear) {
-    gear.removeEventListener('click', toggleFilterContainer(filterContainer));
     filterContainer.classList.add('hidden');
     // Reset all legend items
     legendItems.forEach(item => {
@@ -1547,43 +1547,41 @@ function showTourStep(stepIndex) {
     map.setPaintProperty('building-layer', 'fill-opacity', 1);
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
-    if (gear) {
-      gear.onclick = function () {
-        // filterContainer.classList.remove('hidden');
+    if (gearElement) {
+      gearElement.onclick = function () {
         currentTourStep++;
-        showTourStep(currentTourStep);
+        showTourStep(map, currentTourStep);
       };
     }
   }
-
+//continue from here, fix this moving backwards
   // Settings configured
   if (step.text === textSettings) {
-    switchTab('block');
-    
-    gear.addEventListener('click', () => toggleFilterContainer(filterContainer));
-    gear.click();
-    settingsUpdated();
+    gearElement.onclick=null;
+    switchTab(map, 'building');
+    if (filterContainer.classList.contains('hidden')){
+      toggleFilterContainer(filterContainer);
+    }
+    settingsUpdated(map);
   }
 
-  if (step.text === textChangeToBuildings) {
+  if (step.text === textChangeToBlocks) {
+    switchTab(map, 'block');
+    settingsUpdated(map);
+  }
+ 
+  if (step.text === textChangeBackToBuildings) {
     pattern.checked = false;
-    if (ownertenant){
-      ownertenant.checked = true;
-      vacancy.checked = true;  
-    }
-    settingsUpdated();
-    switchTab('building');
-    filterContainer.classList.remove('hidden');
-    // switchTab('building');
-    // if (citywide){
-       // citywide.checked = false;
-    // }
+   
+   switchTab(map, 'building');
+
+    settingsUpdated(map);
   }
  
   if (step.text === textAddPattern) {
     pattern.checked = true;
     citywide.checked = false;
-    settingsUpdated();
+    settingsUpdated(map);
     filterContainer.classList.remove('hidden');
   }
   if (step.text === textDisplayAverage) {
@@ -1591,7 +1589,7 @@ function showTourStep(stepIndex) {
     vacancy.checked = true;
     citywide.checked = true;
     pattern.checked = false;
-    settingsUpdated();
+    settingsUpdated(map);
     filterContainer.classList.remove('hidden');
   }
 
@@ -1601,71 +1599,86 @@ function showTourStep(stepIndex) {
       vacancy.checked = false;
     }
     pattern.checked = false;
-    settingsUpdated();
+    settingsUpdated(map);
     filterContainer.classList.remove('hidden');
   }
-    if (step.text === textZoomToBlocks) {
-        settingsUpdated();
+    if (step.text === textZoomToBuildings) {
+    settingsUpdated(map);
   
+    mapLegend.classList.add('hidden');
       // resetAndHighlight(legendItems, '');
     }
   if (step.text === textLegend) {
-    settingsUpdated();
+    settingsUpdated(map);
+    mapLegend.classList.remove('hidden');
       // filterContainer.classList.add('hidden');
   }
-    if (step.text === textBlockFiled) {
-      resetAndHighlight(legendItems, 'block-file');
+    if (step.text === textBuildingComplete) {
+      resetAndHighlight(legendItems, 'complete-file');
     }
-    if (step.text === textBlockNoFile) {
+    if (step.text === textBuildingNoneFiled) {
 
-      gear.addEventListener('click', () => toggleFilterContainer(filterContainer));
-      resetAndHighlight(legendItems, 'block-no-file');
+    // gearElement.removeEventListener('click', toggleFilterContainer);
+      resetAndHighlight(legendItems, 'no-file');
     }
   if (step.text === textTimeline) {
 
-    filterContainer.classList.add('hidden');
+  selectYear(map, 0);
+  filterContainer.classList.add('hidden');
+  vacancy.checked = true;
+  ownertenant.checked = true;
+  settingsUpdated(map);
 
-    vacancy.checked = true;
-    ownertenant.checked = true;
-    settingsUpdated();
+ // Reset all legend items
+  legendItems.forEach(item => {
+    item.classList.remove('highlighted');
+    item.classList.remove('dimmed');
+  });
 
-   // Reset all legend items
-    legendItems.forEach(item => {
-      item.classList.remove('highlighted');
-      item.classList.remove('dimmed');
-    });
-
-    map.setPaintProperty('building-layer', 'fill-opacity', 1);
-    map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
-    map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
-  }
+  map.setPaintProperty('building-layer', 'fill-opacity', 1);
+  map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
+  map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
+}
+if (step.text === textTimeline2) {
+  selectYear(map, 2);
+}
 //14. textPropertyDetails,
   if (step.text === textPropertyDetails) {
   }
 //15. textDone
   if (step.text === textDone) {
     citywide.checked = false;
-    settingsUpdated();
+    settingsUpdated(map);
     map.setPaintProperty('building-layer', 'fill-opacity', 1);
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
   }
 }
 
-function exitTour() {
-  if (window.matchMedia("(max-width: 1050px)").matches || window.matchMedia("(max-width: 1050px) and (orientation: landscape)").matches){
-    document.getElementById('navbar').classList.remove("hidden");
-  }
+function makeExitTour(map) {
+  return function(){
 
-  document.getElementById('legend-container').classList.remove("legend-container-tour");
-   document.getElementById('aboutmap').classList.remove("aboutmap-tour");
- 
-  map.setPaintProperty('building-layer', 'fill-opacity', 1);
-  map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
-  map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
-  map.setFilter('block-highlight', ['==', 'blockStatus', '']);
-  document.getElementById('tour-tooltip').classList.add('hidden');
-  document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+      const legendItemsContainer = document.getElementById('legend-items');
+      const legendItems = legendItemsContainer.querySelectorAll('.legend-item');
+     legendItems.forEach(item => {
+      item.classList.remove('dimmed');
+      item.classList.remove('highlighted');
+    });
+
+    if (window.matchMedia("(max-width: 1050px)").matches || window.matchMedia("(max-width: 1050px) and (orientation: landscape)").matches){
+      document.getElementById('navbar').classList.remove("hidden");
+    }
+
+    document.getElementById('legend-container').classList.remove("legend-container-tour");
+     document.getElementById('aboutmap').classList.remove("aboutmap-tour");
+   
+    map.setPaintProperty('building-layer', 'fill-opacity', 1);
+    map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
+    map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
+    map.setFilter('block-highlight', ['==', 'blockStatus', '']);
+    document.getElementById('tour-tooltip').classList.add('hidden');
+    document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));  
+  }  
 }
 
 // ===== Click/Touch/Hover Map =====
