@@ -315,7 +315,6 @@ fetch('js/vacanseestyle.json')
   });
 
   map.on('zoomend', () => {
-    console.log(map.getZoom());
     if (map.getZoom() > maxZoom) {
       map.zoomTo(maxZoom);
     }

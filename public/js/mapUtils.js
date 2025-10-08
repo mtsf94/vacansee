@@ -1033,7 +1033,6 @@ function addMapLegend(map, currentYear) {
       legendMinContainer.classList.toggle('hidden');
     })
   );
-  settingsToggle
   settingsToggle.addEventListener('click',toggleFilterContainer);
   toggleGear.addEventListener('click',toggleFilterContainer);
 }
@@ -1321,8 +1320,8 @@ function makeDraggable(element, containerSelector = "#map-container") {
 const years = ['2022', '2023', '2024'];
 //functions to help with animating across years
 function startAnimation(map) {
-
   stopParcelPopcorns();
+  const animateBtn = document.getElementById('animate-timeline');
   animateBtn.classList.add('active');
   animateBtn.textContent = 'Stop';
   animateInterval = setInterval(() => {
@@ -1351,8 +1350,6 @@ function stopAnimation() {
 function selectYear(map, idx) {
   const activeTab = document.querySelector('.mode-tab.active');
   const mode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
-  console.log(years);
-  console.log("foh")
   document.querySelectorAll('.year-tick').forEach(t => t.classList.remove('selected'));
   document.querySelector(`.year-tick[data-year="${years[idx]}"]`).classList.add('selected');
   window.currentYear = years[idx];
@@ -1718,7 +1715,7 @@ const handleMapTap = (e,map) => {
     clearAllPersistentPopups();
     const groupedFeature = groupedFeatures[0];
     // const groupIndex = feature.properties.groupIndex;
-    showPopup(groupedFeature, makePersistent = true);
+    showPopup(map, groupedFeature, makePersistent = true);
     // showPersistentPopup(feature, groupIndex, lngLat);
   } else {
     clearAllPersistentPopups();
