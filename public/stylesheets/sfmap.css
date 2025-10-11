@@ -964,7 +964,7 @@ footer {
 
   .legend-container {
     top: 63%;
-    min-width: 260px;
+    min-width: 310px;
   }
 
   .legend-container-tour {
@@ -1083,7 +1083,7 @@ footer {
   }
   .legend-container {
     top: 38%;
-    min-width: 260px;
+    min-width: 310px;
   }
 
   #aboutmap-fullscreen-btn {
