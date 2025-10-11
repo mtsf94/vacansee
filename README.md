@@ -51,6 +51,11 @@ Just copy and paste this code:
 
 ## Changelog
 
+### 2025-10-11
+- Updating map JS to use Protomaps and PM tiles
+- Move CDN and update links
+- Fix a few bugs
+
 ### 2025-10-07
 - Updating map style to use Positron
 - Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20251007.geojson), which includes 5,103 parcels at this time. 
