@@ -1,6 +1,4 @@
 //server.js
-//issues: maxZoom limited to 15 on Positron
-
 const express = require('express');
 const path = require('path');
 const cors = require('cors');

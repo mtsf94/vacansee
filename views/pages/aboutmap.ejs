@@ -3,7 +3,9 @@
 <head>
     <title><%= t(websiteName) %></title>
     <%- include('../partials/header') %>
-    <style>
+
+ <link href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css" rel="stylesheet" />
+     <style>
 .loading-overlay {
   display: block;
   position: fixed;
@@ -21,10 +23,12 @@
 }
 
 .progress-container {
-    position: relative;
+    position: absolute;
   width: 50%;
-  margin: 40px auto 0 auto;
+  top: 30vh;
   height: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   background:  #eee;
   border-radius: 15px;
   border: 3px solid white;
@@ -77,6 +81,14 @@ html, body {
 </head>
 <body>
 
+<script>
+window.addEventListener('load', () => {
+  const fullpagediv = document.getElementById("fullpagediv");
+  if (fullpagediv) {
+    fullpagediv.classList.remove("hidden");
+  }
+});
+</script>
 <div id="spinner-overlay" class="loading-overlay">
   <div id="loading-message-continuous">Loading site...</div><br>
     <div class="progress-container finite">
@@ -94,7 +106,7 @@ html, body {
     </div>
 </div>
 
-    <div id="fullpagediv">
+    <div id="fullpagediv hidden">
 
         <%- include('../partials/nav') %>
          <div id="tour-modal"  class="hidden" >
@@ -142,7 +154,7 @@ html, body {
                     </div>
                     <div id="aboutmap" class="aboutmap"></div>
                     <div class="legend-container" id="legend-container">
-                         <div id="map-legend"></div>
+                         <div id="map-legend" class=""></div>
                     </div> 
                     <div id="map-filter" class="map-filter"></div>
                     <div id="legend-minimize-container" class="hidden" ></div> 
@@ -193,17 +205,22 @@ html, body {
 <div class="sr-only" id="aria-live" role="status" aria-live="polite"></div>
     <%- include('../partials/footer') %>
 </div>
-    <script>
-        const neighborhood = <%- JSON.stringify(neighborhood) || 'null' %>;
 
+    <script>
+      const neighborhood = <%- JSON.stringify(neighborhood) || 'null' %>;
       window.TRANSLATIONS = <%- JSON.stringify(translationsForClient) %>;
       window.CURRENT_LANG = "<%= currentLang %>";
       function t(key) {
         return window.TRANSLATIONS[key] || key;
       }
     </script>
-    <script src="js/mapNav.js"></script>
-    <script src="js/mapUtils.js"></script>
-    <script src="js/mapMain.js"></script>
+  
+<script src="https://cdn.vacansee.org/js/maplibre-gl.js"></script>
+<script src="https://cdn.vacansee.org/js/pmtiles.js"></script>
+
+   <script src="js/mapNav.js"></script>
+    <script type="module" src="js/mapUtils.js"></script>
+    <script type="module"  src="js/mapMain.js"></script>
+
 </body>
 </html>

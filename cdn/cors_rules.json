@@ -1,0 +1,9 @@
+{
+    "allowed": {
+        "origins": ["https://vacansee.org", "https://www.vacansee.org", "http://localhost:8080"],
+        "methods": ["GET","HEAD"],
+        "headers": ["range","if-match"]
+    },
+    "exposeHeaders": ["etag"],
+    "maxAgeSeconds": 3000
+}

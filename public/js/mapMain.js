@@ -1,27 +1,42 @@
-maplibregl.addProtocol('SparseVectorTiles', async (params, abortController) => {
-  const [z, x, y] = params.url.replace('SparseVectorTiles://', '').split('/');
+import {bounds, startAnimation, startTour, stopAnimation, selectYear, stopParcelPopcorns, 
+startParcelPopcorns, showTourStep, tourSteps, showPopup, handleMapTap, flyTourDivToHamburger, 
+isMobile, addMapLegend, settingsUpdated, getFillExpression, groupHasCSVData, groupParcelsByGeometry, 
+hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
+// import { namedFlavor } from "@protomaps/basemaps"
+// import { layers, namedFlavor } from '@protomaps/basemaps';
+// let flavor = {...namedFlavor("light"),buildings:"red"}
 
-  const tileUrl = `https://cdn.vacansee.org/tiles/vectortiles/carto.streets/v1/${z}/${x}/${y}.mvt`;
 
-  const response = await fetch(tileUrl, { signal: abortController.signal });
-  if (!response.ok) {
-    // Handle 404/no tile by returning an empty vector tile buffer or throwing error
-    if (response.status === 404) {
-      // Return empty tile data (zero-length ArrayBuffer)
-      return { data: new ArrayBuffer(0) };
-    }
-    throw new Error(`Tile fetch error: ${response.statusText}`);
-  }
-  const buffer = await response.arrayBuffer();
-  return { data: buffer };
-});
+// URL to your PMTiles file on Cloudflare (replace SFmap.pmtiles with your file)
+// const PMTILES_URL = "https://cf.vacansee.org/SFmap.pmtiles";
+
+// maplibregl.addProtocol('SparseVectorTiles', async (params, abortController) => {
+//   const [z, x, y] = params.url.replace('SparseVectorTiles://', '').split('/');
+
+//   const tileUrl = `https://cdn.vacansee.org/tiles/vectortiles/carto.streets/v1/${z}/${x}/${y}.mvt`;
+
+//   const response = await fetch(tileUrl, { signal: abortController.signal });
+//   if (!response.ok) {
+//     // Handle 404/no tile by returning an empty vector tile buffer or throwing error
+//     if (response.status === 404) {
+//       // Return empty tile data (zero-length ArrayBuffer)
+//       return { data: new ArrayBuffer(0) };
+//     }
+//     throw new Error(`Tile fetch error: ${response.statusText}`);
+//   }
+//   const buffer = await response.arrayBuffer();
+//   return { data: buffer };
+// });
 
 // ===== Constants =====
+const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocol.tile);
+
 const animation_duration = 1300; // ms
 let cloudFrontURL = "https://cdn.vacansee.org";
-const parcelsUrl = cloudFrontURL + '/parcels_with_frontage.geojson';
+const parcelsUrl = cloudFrontURL + '/data/parcels_with_frontage100725.geojson';
 //defining the possible modes we might see on the map
-const allModes = [
+export const allModes = [
     'blockfiling',
     'filing',
     'filing-ownertenant-vacancy',
@@ -29,146 +44,112 @@ const allModes = [
     'filing-ownertenant'
   ];
 
-const maxZoom = 16.9;
+const maxZoom = 22;
 
 //set defaults values and arrays that will be used later
 let groupedFeatures = [];
 let allFeatures = [];
 let currentYear = localStorage.getItem('preferredYear') || "2022";
 let persistentPopups = [];
-let showCitywide = false;
-let showPattern = false;
-let currentTourStep = 0;
-let currentMode = 'filing-ownertenant-vacancy';
+// let showCitywide = false;
+window.currentTourStep = 0;
 let currentLang = 'en';
-let currentYearIdx = 0; //for year animation
 let animateInterval = null;
+window.currentMode = 'filing-ownertenant-vacancy';
 
-const savedYear = localStorage.getItem('preferredYear') || "2022";  
-const map_fill_vac =            {'color': '#d64200', 'pattern': 'tmpoly-plus-100-black',                      'svg': 'tm-plus-100'};
-const map_fill_nofile =         {'color': '#767676', 'pattern': 'tmpoly-circle-light-100-black',              'svg': 'tm-circle-light-100' };
-const map_fill_complete =       {'color': '#27629C', 'pattern': 'tmpoly-grid-light-200-black',                'svg': 'tm-grid-light-200'  };
-const map_fill_partcomplete1 =  {'color': '#3399ff', 'pattern': 'tmpoly-line-vertical-down-light-100-black',  'svg': 'tm-line-vertical-down-light-100'};
-const map_fill_partcomplete2 =  {'color': '#daa520', 'pattern': 'tmpoly-square-100-black',                    'svg': 'tm-square-100'};
+
+export const savedYear = localStorage.getItem('preferredYear') || "2022";  
+export const map_fill_vac =            {'color': '#d64200', 'pattern': 'tmpoly-plus-100-black',                      'svg': 'tm-plus-100'};
+export const map_fill_nofile =         {'color': '#767676', 'pattern': 'tmpoly-circle-light-100-black',              'svg': 'tm-circle-light-100' };
+export const map_fill_complete =       {'color': '#27629C', 'pattern': 'tmpoly-grid-light-200-black',                'svg': 'tm-grid-light-200'  };
+export const map_fill_partcomplete1 =  {'color': '#3399ff', 'pattern': 'tmpoly-line-vertical-down-light-100-black',  'svg': 'tm-line-vertical-down-light-100'};
+export const map_fill_partcomplete2 =  {'color': '#daa520', 'pattern': 'tmpoly-square-100-black',                    'svg': 'tm-square-100'};
+
 
 // ===== Underlying Map Layer Setup =====
+let defaultCenter = [-122.4394, 37.7719];
 
-let defaultCenter = [-122.4194, 37.7749];
 if (neighborhood){
-  defaultCenter = [neighborhood.longitude, neighborhood.latitude];
+   defaultCenter = [neighborhood.longitude, neighborhood.latitude];
+}
+export function getAllFeatures() {
+  return allFeatures;
 }
 
+export function setAllFeatures(features) {
+  allFeatures = features;
+}
 
-
-// const map = new maplibregl.Map({
-//   container: 'aboutmap',
-//   style: {
-//     version: 8,
-//     sprite: window.location.origin + "/img/sprites/polygons-sprite",
-//     sources: {},
-//     layers: []
-//   },
-//   center: defaultCenter,
-//   zoom: 13
-// });
-
-// let map = new maplibregl.Map({
-//   container: 'aboutmap',
-//   style:  window.location.origin +'/js/vacanseestyle.json',
-//   center: defaultCenter, 
-//   zoom: 13
-// });
 fetch('js/vacanseestyle.json')
   .then(r => r.json())
   .then(style => {
     // style.sprite = window.location.origin + '/img/sprites/polygons-sprite';
-
     const map = new maplibregl.Map({
       container: 'aboutmap',
-      style: {
-        version: 8,
-        sprite: window.location.origin + "/img/sprites/polygons-sprite",
-        sources: {},
-        layers: []
-      },
+      style: style,
+      flavor:"dark",
       center: defaultCenter,
-      zoom: 12
+      zoom: 12,
+      maxZoom: maxZoom,
+      minZoom: 10.5,
+      maxBounds: bounds
     });
-
-  // map.style.sprite =  window.location.origin + "/img/sprites/polygons-sprite";
-
-
-
-  function createToggleHandlerGear(map) {
-    return function () {
-      currentTourStep++;
-      filterContainer.classList.remove('hidden');
-      showTourStep(map, currentTourStep);
-    };
-  }
-
-  let toggleHandlerGear = createToggleHandlerGear(map);
-
+setProgress(95);
+ 
     const tourModal = document.getElementById('tour-modal');
 
   map.on('load', () => {
-     
-    //  commenting out old tiles for now
-     map.addSource('osm-tiles', {
-      type: 'raster',
-      tiles: [
-        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-      ],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors'
-    });
+    //wait until the map loading has idled twice to remove loading screen
+    let idleCount = 0;
+
+    function handleIdle() {
+      idleCount++;
+      if (idleCount == 2) {
+        hideLoading();
+        if (tourModal) {
+          if (localStorage.getItem('hideTourPrompt') === '1') {
+            tourModal.classList.add("hidden");
+          } else {
+            tourModal.classList.remove("hidden");
+          }
+        }
+      }
+      if (idleCount === 3) {
+        map.off('idle', handleIdle);
+      }
+    }
+
+    map.on('idle', handleIdle);
+
     map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
 
-  // Lock the pitch to 0 so map stays flat
-  map.setPitch(0);
+    // Lock the pitch to 0 so map stays flat
+    map.setPitch(0);
 
-  // Optionally, prevent changing pitch:
-  map.on('pitch', () => {
-    if (map.getPitch() !== 0) {
-      map.setPitch(0);
-    }
-  });
-    map.addLayer({
-      id: 'osm-tiles',
-      type: 'raster',
-      source: 'osm-tiles',
-      paint: {
-        'raster-saturation': -.8 // grayscale effect
+    // Optionally, prevent changing pitch:
+    map.on('pitch', () => {
+      if (map.getPitch() !== 0) {
+        map.setPitch(0);
       }
     });
-    if (tourModal){
-      document.getElementById('spinner-overlay').classList.add("hidden");
-      document.getElementById('loading-overlay').classList.remove("hidden");
-    } 
     fetchWithProgress(parcelsUrl, pct => {
         setProgress(pct * 0.8); // first 80% of bar for download
     })
     .then(parcelsData => {
-        setProgress(90); // parsing done
+        setProgress(80); // parsing done
      
-        hideLoading();     
         if (tourModal){
-          if (localStorage.getItem('hideTourPrompt') === '1'){
-          tourModal.classList.add("hidden");
-          }
-          else {
-            tourModal.classList.remove("hidden");
-          }
-        }
+          document.getElementById('spinner-overlay').classList.add("hidden");
+          document.getElementById('loading-overlay').classList.remove("hidden");
+        } 
         window.parcelsData=parcelsData;
         const year = currentYear;
-        allFeatures = groupParcelsByGeometry(parcelsData.features)
+        let allFeatures = groupParcelsByGeometry(parcelsData.features)
           .filter(group => {
           return groupHasCSVData(group, year)}
         );
-        let  initialFillColorExpression = getFillExpression(currentMode).color;
+        setAllFeatures(allFeatures);
+        let  initialFillColorExpression = getFillExpression(window.currentMode).color;
         map.addSource('parcels', { type: 'geojson', data: parcelsData });
         map.addLayer({
           id: 'parcels-layer',
@@ -236,29 +217,29 @@ fetch('js/vacanseestyle.json')
         const yearSelect = document.getElementById('year-select');
         window.currentYear=savedYear;
         const savedMode = localStorage.getItem('preferredMode') || "vacancy";
-        if (savedYear && ['2022', '2023', '2024'].includes(savedYear)) {
-          useYear = savedYear;
-        }
+        // if (savedYear && ['2022', '2023', '2024'].includes(savedYear)) {
+        //   useYear = savedYear;
+        // }
         if (savedMode && ['filing', 'filing-ownertenant', 'filing-ownertenant-vacancy', 'filing-vacancy'].includes(savedMode)) {
-          currentMode = savedMode;
+          window.currentMode = savedMode;
         }
-        addMapLegend(map, prefYear);
+        addMapLegend(map, savedYear);
         
-  let visibleCheckboxes = document.querySelectorAll('#legend-checkboxes input[type="checkbox"]');
-        settingsUpdated(map);
-
-        allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+        let visibleCheckboxes = document.querySelectorAll('#legend-checkboxes input[type="checkbox"]');
+       settingsUpdated(map);
+       let  allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
         allCheckboxes.forEach(cb => {
           cb.addEventListener('change', function() {
-  let visibleCheckboxes = document.querySelectorAll('#legend-checkboxes input[type="checkbox"]');
-            settingsUpdated(map);
-           });
+            let visibleCheckboxes = document.querySelectorAll('#legend-checkboxes input[type="checkbox"]');
+              settingsUpdated(map);
+             });
         });
       })
       .catch(err => {
         alert('Could not load data: ' + err.message);
         hideLoading();
       });     
+  startParcelPopcorns(map);
   });
 
   // ===== Load Data & Select Year =====
@@ -297,7 +278,7 @@ fetch('js/vacanseestyle.json')
     if (e.features.length > 0) {
       const feature = e.features[0];
       stopParcelPopcorns();
-      showPopup(map, feature, makePersistent=false);
+      showPopup(map, feature);
     }
   });
 
@@ -315,9 +296,7 @@ fetch('js/vacanseestyle.json')
   });
 
   map.on('zoomend', () => {
-    if (map.getZoom() > maxZoom) {
-      map.zoomTo(maxZoom);
-    }
+   
 
     var outlineVisibility = map.getLayoutProperty('building-outline', 'visibility');
     if (map.getZoom() >= 14.5) {
@@ -370,9 +349,7 @@ fetch('js/vacanseestyle.json')
 
   if (fullscreenBtn || exitBtn){
     // Handle fullscreen changes
-
-    //continue from here, experiment with this to fix the safari fullscreen issue
-    document.addEventListener("fullscreenchange", function() {
+      document.addEventListener("fullscreenchange", function() {
       const isFullscreen = (document.fullscreenElement  && (document.fullscreenElement === frame));
       if (isFullscreen) {
         if (nav) nav.classList.add("hidden");
@@ -405,11 +382,13 @@ fetch('js/vacanseestyle.json')
 
   // Year Picker: run animation mode
   const animateBtn = document.getElementById('animate-timeline');
-  animateBtn.addEventListener('click', function() {
+   let animateInterval= null;
+   animateBtn.addEventListener('click', function() {
     if (animateInterval) {
-      stopAnimation();
+       stopAnimation(animateInterval);
+       animateInterval = null;
     } else {
-      startAnimation(map);
+      animateInterval = startAnimation(map);
     }
   });
   document.querySelector('.year-tick[data-year="'+savedYear+'"]').classList.add('selected');
@@ -427,15 +406,15 @@ fetch('js/vacanseestyle.json')
     }};
 
     document.getElementById('tour-next-btn').onclick = () => {
-      if (currentTourStep < tourSteps.length - 1) {
-        currentTourStep++;
-        showTourStep(map, currentTourStep);
+      if (window.currentTourStep < tourSteps.length - 1) {
+        window.currentTourStep++;
+        showTourStep(map, window.currentTourStep);
       }
     };
     document.getElementById('tour-prev-btn').onclick = () => {
-      if (currentTourStep > 0) {
-        currentTourStep--;
-        showTourStep(map, currentTourStep);
+      if (window.currentTourStep > 0) {
+        window.currentTourStep--;
+        showTourStep(map, window.currentTourStep);
       }
     };
     const exitTour = makeExitTour(map);

@@ -54,7 +54,9 @@ const translations = {
     "is a map of commercial property vacancies in San Francisco made with public open data.":"is a map of commercial property vacancies in San Francisco made with public open data.",
     'In 2020, San Francisco voters <a href="https://www.sfelections.org/results/20200303/data/20200303_3/summary.pdf">passed</a> Prop D, creating a vacancy tax on certain commercial space in SF. Prop D <a href="https://www.sftreasurer.org/business/taxes-fees/commercial-vacancy-tax-cvt">requires</a> owners and tenants to file annual returns. Self-reported data collection began in 2022. Prop D funds support the Small Business Assistance Fund, helping local businesses thrive.':'In 2020, San Francisco voters <a href="https://www.sfelections.org/results/20200303/data/20200303_3/summary.pdf">passed</a> Prop D, creating a vacancy tax on certain commercial space in SF. Prop D <a href="https://www.sftreasurer.org/business/taxes-fees/commercial-vacancy-tax-cvt">requires</a> owners and tenants to file annual returns. Self-reported data collection began in 2022. Prop D funds support the Small Business Assistance Fund, helping local businesses thrive.',
     "The tax amount is based on the  property's street-facing frontage: $250 per foot in the first vacant year, $500 in the second, and $1,000 from vacant year three onward. Although official frontage data was unavailable, this map estimates frontage using GeoJSON property data. All such estimates are unofficial.":"The tax amount is based on the  property's street-facing frontage: $250 per foot in the first vacant year, $500 in the second, and $1,000 from vacant year three onward. Although official frontage data was unavailable, this map estimates frontage using GeoJSON property data. All such estimates are unofficial.",
-    'VacanSee is a community-built tool and not affiliated with the city. This map complements existing <a href="https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2">official SFGov visualizations</a>, letting users explore where vacancies were reported in the first years of data collection. With this map, users can:':'VacanSee is a community-built tool and not affiliated with the city. This map complements existing <a href="https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2">official SFGov visualizations</a>, letting users explore where vacancies were reported in the first years of data collection. With this map, users can:',
+    
+    'VacanSee is a community-built tool and not affiliated with the city. This map complements existing <a href="https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2">official SFGov visualizations</a>, letting users explore where vacancies were reported in the first years of data collection. Data is current as of October 6, 2025. With this map, users can:':
+    'VacanSee is a community-built tool and not affiliated with the city. This map complements existing <a href="https://data.sfgov.org/Economy-and-Community/Map-of-Commercial-Vacancy-Tax-Status/iynh-ydf2">official SFGov visualizations</a>, letting users explore where vacancies were reported in the first years of data collection. Data is current as of October 6, 2025. With this map, users can:',
     'GitHub':'GitHub',
     ' or email at ':' or email at ',
     "Browse": "Browse",
@@ -104,7 +106,7 @@ const translations = {
     //Settings text
     "Settings":"Settings",
     'Show Property Filing Status': 'Show Property Filing Status',
-    'Show Owner/Tenant Filed': 'Show Owner/Tenant Filed',
+    'Show Owner/Tenant Status': 'Show Owner/Tenant Status',
     'Show Vacancy Status': 'Show Vacancy Status',
     'Show Citywide Percentages': 'Show Citywide Percentages',
     'Use Pattern for Fill': 'Use Pattern for Fill',

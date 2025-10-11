@@ -31,14 +31,14 @@ html, body {
   flex-direction: column;
 }
 
-.mode-tabs-container {
+.mapLevel-tabs-container {
   display: flex;
   border-bottom: 2px solid #eee;
   margin-bottom: 2px;
   justify-content: flex-start;
 }
 
-.mode-tab {
+.mapLevel-tab {
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
@@ -53,12 +53,12 @@ html, body {
   border-radius: 7px 7px 0 0;
   outline: none;
 }
-.mode-tab.active {
+.mapLevel-tab.active {
   color: #066BD6;
   border-bottom: 3px solid #066BD6;
   background: #f8fafc;
 }
-.mode-tab:focus {
+.mapLevel-tab:focus {
   outline: 2px solid #68a8eb;
   outline-offset: 1px;
 }
@@ -376,14 +376,21 @@ footer {
   font-weight: 600;
 }
 
+
+
 .progress-container {
+    position: absolute;
   width: 50%;
-  margin: 40px auto 0 auto;
+  top: 30vh;
   height: 30px;
-  background: #eee;
+  left: 50%;
+  transform: translateX(-50%);
+  background:  #eee;
   border-radius: 15px;
+  border: 3px solid white;
   box-shadow: 0 1px 4px #aaa;
 }
+
 
 .main-color{
   color: var(--header_color_1);
@@ -842,7 +849,7 @@ footer {
 
 /*add hover features, but not in mobile*/
 @media (hover: hover) and (pointer: fine) {
-  .mode-tab:not(.active):hover {
+  .mapLevel-tab:not(.active):hover {
     background: #f2f5fa;
     color: #137ac9;
   }
@@ -1017,7 +1024,7 @@ footer {
     -ms-overflow-style: none;
   }
 
-  .mode-tab {
+  .mapLevel-tab {
     padding: 1px 32px;
   }
   .navbar-right {

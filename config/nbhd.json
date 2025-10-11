@@ -1,5 +1,5 @@
 {
-  "all": { "name": "all", "longitude": -122.4194, "latitude": 37.7749 },
+  "all": { "name": "all", "longitude": -122.4394, "latitude": 37.7719 },
   "marina": { "name": "Marina", "longitude": -122.432240, "latitude": 37.797757 },
   "soma": { "name": "South of Market", "longitude": -122.410181, "latitude": 37.776044 },
   "nbrch": { "name": "North Beach", "longitude": -122.408106, "latitude": 37.800031 },
