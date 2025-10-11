@@ -578,7 +578,6 @@ footer {
   font-weight: bold;
   font-size: 1.1em;
   display: flex;
-  /*min-width: 285px;*/
   padding: 5px 10px;
   background: var(--header_color_1);
   color: var(--header_color_2);
@@ -965,7 +964,7 @@ footer {
 
   .legend-container {
     top: 63%;
-    min-width: 220px;
+    min-width: 230px;
   }
 
   .legend-container-tour {
@@ -1084,7 +1083,7 @@ footer {
   }
   .legend-container {
     top: 38%;
-    min-width: 220px;
+    min-width: 230px;
   }
 
   #aboutmap-fullscreen-btn {

@@ -1468,6 +1468,7 @@ export const tourSteps = [
 ];
 
 export function startTour(map) {
+  stopParcelPopcorns();
 
   if (window.matchMedia("(max-width: 1050px)").matches || window.matchMedia("(max-width: 1050px) and (orientation: landscape)").matches){
     document.getElementById('navbar').classList.add("hidden");
@@ -1505,7 +1506,6 @@ export function showTourStep(map, stepIndex) {
 
   // Highlight current element
   if (step.highlight) {
-
     document.querySelectorAll(step.highlight).forEach(el => el.classList.add('tour-highlight'));
   }
   // Button states
