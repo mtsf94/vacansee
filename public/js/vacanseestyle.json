@@ -1,7 +1,7 @@
 {
     "version": 8,
   "sources": {
-      "protomaps": {
+      "protomaps": { 
         "type": "vector",
         "url": "pmtiles://https://cdn.vacansee.org/PMTiles/SFmap.pmtiles",
         "minzoom": 0,
