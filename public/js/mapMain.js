@@ -30,7 +30,6 @@ hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithPro
 
 // ===== Constants =====
 const protocol = new pmtiles.Protocol();
-  maplibregl.addProtocol("pmtiles", protocol.tile);
 
 const animation_duration = 1300; // ms
 let cloudFrontURL = "https://cdn.vacansee.org";

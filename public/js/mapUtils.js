@@ -72,7 +72,7 @@ const makeBlockFilingIndicator = (f,year, threshhold) =>{
   const makeBlockStatus = (f.properties.vacancy_by_year?.[year]?.blk_filed /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-file': 'block-no-file';
  return  makeBlockStatus;
 }
-const makeGroupVacancyIndicator = (group, year, currentMode) => {
+const makeGroupVacancyIndicator = (group, year, currentMode, blockThreshhold=.8) => {
   if (!groupHasCSVData(group, year)) return null;
   const blockFiled = makeBlockFilingIndicator(group[0], year, blockThreshhold);
   const hasOwner = groupHasOwner(group, year);
@@ -109,7 +109,7 @@ const makeGroupVacancyIndicator = (group, year, currentMode) => {
   }
 };
 
-const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy') => {
+const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy', blockThreshhold=.8) => {
   const rec = f.properties.vacancy_by_year?.[year];
   if (!rec) return;
   const vacant = String(rec.vacant || '').trim().toUpperCase() === 'YES';
@@ -483,7 +483,7 @@ function announce(msg) {
   document.getElementById('aria-live').textContent = msg;
 }
 
-const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
+const updateMapForYear = (map, geojsonData, year, mapLevel="building", blockThreshhold=.8) => {
   
   // showLoading(`${t("Loading year")} ${year}. ${t("One moment")}`);
   // Call announce() after major updates
@@ -537,7 +537,7 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;
   // window.showCitywide = false;
   clearAllPersistentPopups();
-  updateLegend(map, citywideStats, mapLevel, window.showCitywide) ;
+  updateLegend(map, citywideStats, mapLevel, window.showCitywide, blockThreshhold) ;
   // setProgress(90);
   return allFeatures;
 };
@@ -858,7 +858,8 @@ const el = ({ tag, class: className = '', id = '', innerHTML = '' }) => {
 const filterOptions = {    
   block: [
     { id: 'blockfiling', label: t('Show Block Filing Status') },
-    { id: 'pattern', label: t('Use Pattern for Fill') }
+    { id: 'pattern', label: t('Use Pattern for Fill') },
+    { id: 'threshhold', label: t('Threshhold %') }
   ],
   building: [
     { id: 'filing', label: t('Show Property Filing Status') },
@@ -880,14 +881,53 @@ function switchTab(map, mapLevel) {
   checkboxesDiv.innerHTML = '';
   buildCheckboxes(map, mapLevel);
 }
-
 function buildCheckboxes(map, mapLevel) {
-  checkboxesDiv.innerHTML = ''; 
+  checkboxesDiv.innerHTML = '';
+
   filterOptions[mapLevel].forEach((opt, idx) => {
-    const label = el({ tag: 'label', class: 'switch-label', id:'switch-'+opt.id });
+    const label = el({ tag: 'label', class: 'switch-label', id: 'switch-' + opt.id });
     const labelText = el({ tag: 'span', class: 'label-text' });
     labelText.textContent = opt.label;
+    if (mapLevel === 'block' && opt.id === 'threshhold') {
+      const container = el({ tag: 'div', class: 'slider-container' });
 
+      const slider = document.createElement('input');
+      slider.type = 'range';
+      slider.id = 'thresholdSlider';
+      slider.className = 'threshold-slider';
+      slider.min = 60;
+      slider.max = 100;
+      slider.step = 20;
+      slider.value = tabStates.block?.threshhold || 100;
+      slider.setAttribute('list', 'thresholdTicks');
+
+      const datalist = document.createElement('datalist');
+      datalist.id = 'thresholdTicks';
+      [ 60, 80, 100].forEach(val => {
+        const option = document.createElement('option');
+        option.value = val;
+        option.label = val + '%';
+        datalist.appendChild(option);
+      });
+
+      const output = document.createElement('span');
+      output.id = 'thresholdValue';
+      output.textContent = slider.value + '%';
+      output.className = 'slider-value';
+
+      slider.addEventListener('input', () => {
+        output.textContent = slider.value + '%';
+        tabStates.block.threshhold = parseInt(slider.value, 10);
+        settingsUpdated(map);
+      });
+
+      container.append(slider, output, datalist);
+      label.append(labelText, container);
+      checkboxesDiv.appendChild(label);
+      return;
+    }
+
+    // Regular checkbox logic
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'switch-input';
@@ -898,7 +938,7 @@ function buildCheckboxes(map, mapLevel) {
     const flagControls = ['pattern', 'citywide'];
     let checked = tabStates[mapLevel][opt.id];
     if (typeof checked === 'undefined') {
-    checked = !flagControls.includes(opt.id);
+      checked = !flagControls.includes(opt.id);
     }
     checkbox.checked = checked;
     checkbox.setAttribute('aria-checked', checkbox.checked);
@@ -908,17 +948,14 @@ function buildCheckboxes(map, mapLevel) {
       labelText.style.color = '#aaa';
       labelText.style.cursor = 'not-allowed';
     }
-    //if you turn pattern fill on/off, change all tabs to this settings
+
     checkbox.addEventListener('change', () => {
       tabStates[mapLevel][opt.id] = checkbox.checked;
-
       if (opt.id === 'pattern') {
         const otherMapLevel = mapLevel === 'building' ? 'block' : 'building';
         tabStates[otherMapLevel]['pattern'] = checkbox.checked;
       }
-
       settingsUpdated(map);
-  
     });
 
     const slider = el({ tag: 'span', class: 'slider round' });
@@ -926,6 +963,7 @@ function buildCheckboxes(map, mapLevel) {
     checkboxesDiv.appendChild(label);
   });
 }
+
 
 function makeLegendMinimize() {
   const legendMinimize = document.getElementById('legend-minimize-container');
@@ -938,6 +976,7 @@ function makeLegendMinimize() {
           tag: 'div',
           class:'map-toggle',
           id: `legend-minimized`,
+          //TODO: swap plus for better char, e.g. the X is &#10006;
           innerHTML:`&plus;`
         });
   legendMinimize.appendChild(titleMinText);
@@ -949,6 +988,7 @@ const tabStates = {
   block: {}
 };
 
+//TODO: incorporate slider here
 function settingsUpdated(map) {
   const activeTab = document.querySelector('.mapLevel-tab.active');
   const mapLevel = activeTab ? activeTab.id.replace('tab-', '') : 'building';
@@ -965,7 +1005,10 @@ function settingsUpdated(map) {
   // modeParts.sort(); // Optional: sort for consistent mode strings like "filing" vs "vacancy-filing"
   window.currentMode = modeParts.join('-');
   const useYear = localStorage.getItem('preferredYear') || "2022";
-  let allFeatures = updateMapForYear(map, window.currentData, useYear, mapLevel);
+
+  //TODO: get blockThreshhold from slider here, if it exists
+  let blockThreshhold=.8;
+  let allFeatures = updateMapForYear(map, window.currentData, useYear, mapLevel, blockThreshhold);
     setAllFeatures(allFeatures);
 
     // return {showCitywide, showPattern};
@@ -1064,7 +1107,7 @@ function saveCurrentTabState(mapLevel) {
 
 const prefYear = localStorage.getItem('preferredYear') || "2022";
 
-function updateLegend(map, citywide, mapLevel='building', showCitywide=false, showPattern=false) {
+function updateLegend(map, citywide, mapLevel='building', showCitywide=false , blockThreshhold= .8) {
   if (!citywide) return;
 
   // addMapLegend(map, prefYear) 
@@ -1381,7 +1424,9 @@ export function selectYear(map, idx) {
 
   localStorage.setItem('preferredYear', years[idx]);
 
-  let  allFeatures = updateMapForYear(map, window.currentData, years[idx],mapLevel);
+  //TODO: get blockThreshhold from slider here, if it exists
+  let blockThreshhold=.8;
+  let  allFeatures = updateMapForYear(map, window.currentData, years[idx],mapLevel, blockThreshhold);
   setAllFeatures(allFeatures);
 }
 
