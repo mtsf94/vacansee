@@ -931,7 +931,6 @@ function buildCheckboxes(map, mapLevel) {
         const otherMapLevel = mapLevel === 'building' ? 'block' : 'building';
         tabStates[otherMapLevel]['pattern'] = checkbox.checked;
       }
-
       settingsUpdated(map);
     });
 
