@@ -2,7 +2,9 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const { cleanOldLogs, aggregatedVisits } = require('./utils/visitors');
+const { cleanOldLogs, aggregateDailyVisits } = require('./utils/visitors');
+
+
 const { SETPORT } = require('./config/constants');
 
 var PORT     = process.env.PORT || 8080;
@@ -30,11 +32,17 @@ require('./app/routes.js')(app);
 
 const cron = require('node-cron');
 
-// Run cleanOldLogs every hour on the hour, keeping old visit logs for 30 days max
-cron.schedule('0 0 * * *', () => {
-  const deletedCount = cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000);
-  console.log('Cleaned old logs - hourly cron job. Removed '+deletedCount+' logs.');
+// Clean old logs daily at midnight
+cron.schedule('0 0 * * *', async () => {
+  const deletedCount = await cleanOldLogs();
+  console.log('Cleaned old logs:', deletedCount);
 });
+
+// Aggregate visits daily at midnight
+cron.schedule('5 0 * * *', async () => {
+  await aggregateDailyVisits();
+});
+
 
 const aggregateWordLevel= aggregateWord+ '-level';
 

@@ -1,24 +1,64 @@
-//utils/visitors.js
-// Cleanup old raw logs (>30 days) in Supabase
-async function cleanOldLogs(clean_after = 30 * 24 * 60 * 60 * 1000) {
+// utils/visitors.js
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.DB_API_URL, process.env.SB_SK);
 
-  const { createClient } = require('@supabase/supabase-js');
-  const supabaseUrl = process.env.DB_API_URL; 
-  const supabaseKey = process.env.SB_SK;  
-  const supabase = createClient(supabaseUrl, supabaseKey);
+const CLEAN_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function cleanOldLogs(clean_after = CLEAN_AFTER_MS) {
   const cutoff = new Date(Date.now() - clean_after).toISOString();
-
   const { data, error } = await supabase
     .from('visits')
     .delete()
     .lt('time', cutoff);
-
   if (error) {
     console.error('Error deleting old visits:', error);
     return 0;
   }
-
   return data ? data.length : 0;
+}
+
+async function aggregateDailyVisits() {
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10);
+
+  const { data: visits, error } = await supabase
+    .from('visits')
+    .select('browser, os, lang');
+
+  if (error) {
+    console.error('Error fetching visits for aggregation:', error);
+    return;
+  }
+
+  const counts = {};
+  for (const v of visits) {
+    const key = `${v.browser}_${v.os}_${v.lang}`;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  // Combine small cells into “Other”
+  for (const [key, value] of Object.entries(counts)) {
+    if (value < 5) {
+      delete counts[key];
+      counts['Other'] = (counts['Other'] || 0) + value;
+    }
+  }
+
+  const aggregatedData = Object.entries(counts).map(([key, value]) => {
+    const [browser, os, lang] = key.split('_');
+    return { date: dateStr, browser, os, lang, count: value };
+  });
+
+  const { error: insertError } = await supabase
+    .from('persistent_visits')
+    .insert(aggregatedData);
+
+  if (insertError) {
+    console.error('Error inserting aggregated data:', insertError);
+  } else {
+    console.log('Aggregated daily visits for', dateStr);
+  }
 }
 
 
@@ -34,17 +74,6 @@ async function logVisitToSupabase(visit) {
   }
 }
 
-async function getAggregatedVisits() {
-  const { data, error } = await supabase
-  .from('aggregated_visits')
-  .select('browser,count');
-
-  if (error) {
-    console.error('Error fetching aggregated visits', error);
-    return null;
-  }
-  return data;
-}
 
 module.exports = {
   // visitLog,
@@ -56,5 +85,5 @@ module.exports = {
   // subtractBucket,
   // makeAggregatedVisitsCSV,
   logVisitToSupabase,
-  getAggregatedVisits
+  aggregateDailyVisits
 };

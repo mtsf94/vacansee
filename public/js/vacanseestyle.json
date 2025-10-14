@@ -58,121 +58,9 @@
                 "naval_base",
                 "airfield"
             ],
-            "paint": {
-                "fill-opacity": [
-                    "interpolate",
-                    [
-                        "linear"
-                    ],
-                    [
-                        "zoom"
-                    ],
-                    6,
-                    0,
-                    11,
-                    1
-                ],
-                "fill-color": [
-                    "case",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "national_park",
-                                "park",
-                                "cemetery",
-                                "protected_area",
-                                "nature_reserve",
-                                "forest",
-                                "golf_course"
-                            ]
-                        ]
-                    ],
-                    "#c2c2c2",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "wood",
-                                "nature_reserve",
-                                "forest"
-                            ]
-                        ]
-                    ],
-                    "#c2c2c2",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "scrub",
-                                "grassland",
-                                "grass"
-                            ]
-                        ]
-                    ],
-                    "#c2c2c2",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "glacier"
-                            ]
-                        ]
-                    ],
-                    "#d2d2d2",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "sand"
-                            ]
-                        ]
-                    ],
-                    "#d2d2d2",
-                    [
-                        "in",
-                        [
-                            "get",
-                            "kind"
-                        ],
-                        [
-                            "literal",
-                            [
-                                "military",
-                                "naval_base",
-                                "airfield"
-                            ]
-                        ]
-                    ],
-                    "#c7c7c7",
-                    "#cccccc"
-                ]
-            }
+           "paint": {
+                "fill-color": "#cfddd5 "
+              }
         },
         {
             "id": "landuse_urban_green",
@@ -367,7 +255,8 @@
             "source": "protomaps",
             "source-layer": "water",
             "paint": {
-                "fill-color": "#a3a3a3"
+
+                "fill-color": "#3B719F"
             }
         },
         {
@@ -4957,7 +4846,7 @@
                 "text-transform": "uppercase"
             },
             "paint": {
-                "text-color": "#7a7a7a",
+                "text-color": "#FFFFFF",
                 "text-halo-width": 1,
                 "text-halo-color": "#a3a3a3"
             }
