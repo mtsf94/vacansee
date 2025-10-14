@@ -1551,8 +1551,6 @@ export const tourSteps = [
   },
 ];
 
-console.log("LOOK");
-console.log(tourSteps);
 export function startTour(map) {
   stopParcelPopcorns();
 
@@ -1569,9 +1567,6 @@ export function startTour(map) {
   showTourStep(map, 0);
 }
 export function showTourStep(map, stepIndex) {
-  console.log("do you have");
-  console.log(tourSteps);
-  console.log("do you have2");
   const step = tourSteps[stepIndex];
   document.getElementById('tour-tooltip-text').innerText = step.text;
     
