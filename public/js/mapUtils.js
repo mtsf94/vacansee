@@ -1016,7 +1016,7 @@ function makeLegendMinimize() {
           tag: 'div',
           class:'map-toggle',
           id: `legend-minimized`,
-          innerHTML:`&plus;`
+          innerHTML:`&#10010;`
         });
   legendMinimize.appendChild(titleMinText);
   legendMinimize.appendChild(toggleLegendMin);

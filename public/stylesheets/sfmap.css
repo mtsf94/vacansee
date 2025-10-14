@@ -588,8 +588,7 @@ footer {
   flex-basis: 280px;
 }
 #legend-minimized-title-text{
-  flex-basis: 110px;
-  padding-right: 10px;
+  flex-basis: 300px;
 }
 .legend-items {
   margin-bottom: 1em;
