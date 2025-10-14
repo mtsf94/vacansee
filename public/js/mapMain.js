@@ -2,32 +2,6 @@ import {bounds, startAnimation, startTour, stopAnimation, selectYear, stopParcel
 startParcelPopcorns, showTourStep, tourSteps, showPopup, handleMapTap, flyTourDivToHamburger, 
 isMobile, addMapLegend, settingsUpdated, getFillExpression, groupHasCSVData, groupParcelsByGeometry, 
 hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
-// import { namedFlavor } from "@protomaps/basemaps"
-// import { layers, namedFlavor } from '@protomaps/basemaps';
-// let flavor = {...namedFlavor("light"),buildings:"red"}
-
-
-// URL to your PMTiles file on Cloudflare (replace SFmap.pmtiles with your file)
-// const PMTILES_URL = "https://cf.vacansee.org/SFmap.pmtiles";
-
-// maplibregl.addProtocol('SparseVectorTiles', async (params, abortController) => {
-//   const [z, x, y] = params.url.replace('SparseVectorTiles://', '').split('/');
-
-//   const tileUrl = `https://cdn.vacansee.org/tiles/vectortiles/carto.streets/v1/${z}/${x}/${y}.mvt`;
-
-//   const response = await fetch(tileUrl, { signal: abortController.signal });
-//   if (!response.ok) {
-//     // Handle 404/no tile by returning an empty vector tile buffer or throwing error
-//     if (response.status === 404) {
-//       // Return empty tile data (zero-length ArrayBuffer)
-//       return { data: new ArrayBuffer(0) };
-//     }
-//     throw new Error(`Tile fetch error: ${response.statusText}`);
-//   }
-//   const buffer = await response.arrayBuffer();
-//   return { data: buffer };
-// });
-
 // ===== Constants =====
 const protocol = new pmtiles.Protocol();
 
@@ -52,7 +26,6 @@ let groupedFeatures = [];
 let allFeatures = [];
 let currentYear = localStorage.getItem('preferredYear') || "2022";
 let persistentPopups = [];
-// let showCitywide = false;
 window.currentTourStep = 0;
 let currentLang = 'en';
 let animateInterval = null;
@@ -84,7 +57,6 @@ export function setAllFeatures(features) {
 fetch('js/vacanseestyle.json')
   .then(r => r.json())
   .then(style => {
-    // style.sprite = window.location.origin + '/img/sprites/polygons-sprite';
     const map = new maplibregl.Map({
       container: 'aboutmap',
       style: style,
@@ -134,7 +106,7 @@ setProgress(95);
       }
     });
     fetchWithProgress(parcelsUrl, pct => {
-        setProgress(pct * 0.8); // first 80% of bar for download
+        setProgress(pct * 0.8); 
     })
     .then(parcelsData => {
         setProgress(80); // parsing done
@@ -170,10 +142,10 @@ setProgress(95);
         map.addLayer({
           id: 'building-outline',
           type: 'line',
-          source: 'parcels', // Make sure this matches your fill source
+          source: 'parcels',
           paint: {
-          'line-color': '#000',   // black border color
-          'line-width': 0.4        // thickness in pixels, increase as needed
+          'line-color': '#000',   
+          'line-width': 0.4      
           },
           layout: { visibility: 'none' }
         });
@@ -218,9 +190,6 @@ setProgress(95);
         const yearSelect = document.getElementById('year-select');
         window.currentYear=savedYear;
         const savedMode = localStorage.getItem('preferredMode') || "vacancy";
-        // if (savedYear && ['2022', '2023', '2024'].includes(savedYear)) {
-        //   useYear = savedYear;
-        // }
         if (savedMode && ['filing', 'filing-ownertenant', 'filing-ownertenant-vacancy', 'filing-vacancy'].includes(savedMode)) {
           window.currentMode = savedMode;
         }
@@ -321,7 +290,6 @@ setProgress(95);
   if (fullscreenBtn){
 
     fullscreenBtn.addEventListener("click", function() {
-      // if (nav) nav.classList.add("hidden");
      
       if (frame.requestFullscreen) {
         frame.requestFullscreen();
@@ -336,7 +304,6 @@ setProgress(95);
   if (exitBtn){
     // Exit fullscreen
     exitBtn.addEventListener("click", function() {
-      // if (nav)  nav.classList.remove("hidden");
     
       if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -458,10 +425,7 @@ setProgress(95);
     });
 
     // Fullscreen toggle
-    // const frame = document.getElementById("aboutmap-frame");
     const btn = document.getElementById("aboutmap-fullscreen-btn");
-    // const nav = document.getElementById("navbar");
-    // const aboutText = document.getElementById("about-text");
     const exitFsBtn = document.getElementById("aboutmap-exit-btn");
     const fsBtn = ()=>{    
         frame.classList.toggle("fullscreen");
@@ -480,7 +444,6 @@ setProgress(95);
         fsBtn();
       }); 
     }
-  // });
 
   if (tourModal){
 

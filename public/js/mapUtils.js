@@ -79,8 +79,6 @@ const makeBlockCompleteIndicator = (f,year, threshhold) =>{
 }
 const makeGroupVacancyIndicator = (group, year, currentMode) => {
   if (!groupHasCSVData(group, year)) return null;
-  // const blockFiled = makeBlockFilingIndicator(group[0], year, tabStates.block.blockThreshold);
-  // const blockComplete = makeBlockCompleteIndicator(group[0], year, tabStates.block.blockThreshold);
   const hasOwner = groupHasOwner(group, year);
   const hasTenant = groupHasTenant(group, year);
   const hasVacant = groupHasVacant(group, year);
@@ -561,7 +559,6 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
   // Compute combinations for the currently visible features
   const currentYear = window.currentYear || "2022";
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;
-  // window.showCitywide = false;
   clearAllPersistentPopups();
   updateLegend(map, citywideStats, mapLevel, window.showCitywide) ;
   // setProgress(90);
@@ -910,15 +907,15 @@ function buildCheckboxes(map, mapLevel) {
     checkbox.tabIndex = 0;
     checkbox.setAttribute('aria-label', opt.label);
 
-    const flagControls = ['pattern', 'citywide'];
+    const flagOptIn = ['pattern', 'citywide', 'blockcomplete'];
     let checked = tabStates[mapLevel][opt.id];
     if (typeof checked === 'undefined') {
-      checked = !flagControls.includes(opt.id);
+      checked = !flagOptIn.includes(opt.id);
     }
     checkbox.checked = checked;
     checkbox.setAttribute('aria-checked', checkbox.checked);
 
-    if (idx === 0 && !flagControls.includes(opt.id)) {
+    if (idx === 0 && !flagOptIn.includes(opt.id)) {
       checkbox.disabled = true;
       labelText.style.color = '#aaa';
       labelText.style.cursor = 'not-allowed';
@@ -986,7 +983,6 @@ function settingsUpdated(map) {
   // Determine currentMode from other checked IDs (excluding the flags)
   const modeParts = checkedIds.filter(id => !['pattern', 'citywide'].includes(id));
 
-  // modeParts.sort(); // Optional: sort for consistent mode strings like "filing" vs "vacancy-filing"
   window.currentMode = modeParts.join('-');
   const useYear = localStorage.getItem('preferredYear') || "2022";
   let allFeatures = updateMapForYear(map, window.currentData, useYear, mapLevel);
@@ -1128,7 +1124,6 @@ const prefYear = localStorage.getItem('preferredYear') || "2022";
 function updateLegend(map, citywide, mapLevel='building', showCitywide=false, showPattern=false) {
   if (!citywide) return;
 
-  // addMapLegend(map, prefYear) 
   const legendTitleText = document.getElementById('legend-title-text');
   if (!mapLegend) return;
   legendTitleText.innerHTML = t(`Legend`)+(window.showCitywide ? t(` (city %)`):``);
@@ -1612,7 +1607,6 @@ export function showTourStep(map, stepIndex) {
   const legendItems = legendItemsContainer.querySelectorAll('.legend-item');
   const citywide = document.getElementById('citywide');
   const pattern = document.getElementById('pattern');
-  // const filterContainer = document.getElementById('map-filter');
   const ownertenant = document.getElementById('ownertenant');
   const vacancy = document.getElementById('vacancy');
   const resetAndHighlight = (legendItems, targetItemID)=>{
@@ -1647,7 +1641,6 @@ export function showTourStep(map, stepIndex) {
   }
   // Settings (gear) step
 
-  //continue from here, fix this so clicking advances properly
   if (step.text === textGear) {
     filterContainer.classList.add('hidden');
     // Reset all legend items
