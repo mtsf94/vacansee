@@ -183,7 +183,7 @@ const logvisit = async function(req, page= null){
       websiteNameMap,
       currentLang,
       offerTour: true,
-      translationsForClient: logvisittranslations[currentLang] || {},
+      translationsForClient: translations[currentLang] || {},
       langTexts,
       neighborhood: nbhd  
     });
