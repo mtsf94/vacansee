@@ -36,14 +36,6 @@ function hashIP(ip) {
   return crypto.createHmac('sha256', SECRET_HASH_SALT).update(ip).digest('hex');
 }
 
-// Helper: truncate IPv4 to /24 (first 3 octets)
-function truncateIP(ip) {
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
-    return ip.split('.').slice(0, 3).join('.') + '.0';
-  }
-  return ip;
-}
-
 // Helper: get IP respecting proxy headers
 function getIP(req) {
   const forwarded = req.headers['x-forwarded-for'];
@@ -150,8 +142,7 @@ module.exports = function (app) {
   };
 const logvisit = async function(req, page= null){      
       const ip = getIP(req);
-      const truncatedIp = truncateIP(ip);
-      const hashedId = hashIP(truncatedIp);
+      const hashedId = hashIP(ip);
 
       const ua = req.headers['user-agent'] || '';
       const parser = new UAParser(ua);
@@ -165,11 +156,10 @@ const logvisit = async function(req, page= null){
         hashedId,
         browser: browserName,
         os: osName,
-        lang: 'currentLang',
+        lang: currentLang,
         nbhd: page || nbhd.name,
         time: new Date().toISOString()
       };
-
       // Log visit to Supabase table `visits`
       const { error } = await supabase
         .from('visits')
@@ -193,7 +183,7 @@ const logvisit = async function(req, page= null){
       websiteNameMap,
       currentLang,
       offerTour: true,
-      translationsForClient: translations[currentLang] || {},
+      translationsForClient: logvisittranslations[currentLang] || {},
       langTexts,
       neighborhood: nbhd  
     });

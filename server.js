@@ -43,7 +43,6 @@ cron.schedule('5 0 * * *', async () => {
   await aggregateDailyVisits();
 });
 
-
 const aggregateWordLevel= aggregateWord+ '-level';
 
 let cronCommand = '* * * * *';

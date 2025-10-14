@@ -53,6 +53,7 @@ Just copy and paste this code:
 
 ### 2025-10-13
 - Adding block-mode slider
+- Added color to map for water and greenspace 
 - Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20251014.geojson), which includes 5,104 parcels at this time. 
 
 ### 2025-10-11

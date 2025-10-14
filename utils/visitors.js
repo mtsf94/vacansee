@@ -33,23 +33,22 @@ async function aggregateDailyVisits() {
 
   const counts = {};
   for (const v of visits) {
-    const key = `${v.browser}_${v.os}_${v.lang}`;
+    const key = `${v.browser||"NULL"}_${v.os||"NULL"}_${v.lang||"NULL"}`;
     counts[key] = (counts[key] || 0) + 1;
   }
-
   // Combine small cells into “Other”
   for (const [key, value] of Object.entries(counts)) {
     if (value < 5) {
       delete counts[key];
-      counts['Other'] = (counts['Other'] || 0) + value;
+      counts['Other_Other_Other'] = (counts['Other_Other_Other'] || 0) + value;
     }
   }
-
+  
   const aggregatedData = Object.entries(counts).map(([key, value]) => {
     const [browser, os, lang] = key.split('_');
     return { date: dateStr, browser, os, lang, count: value };
   });
-
+  
   const { error: insertError } = await supabase
     .from('persistent_visits')
     .insert(aggregatedData);
