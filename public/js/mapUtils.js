@@ -992,7 +992,6 @@ function settingsUpdated(map) {
     console.log('Block Threshold:', Math.round(tabStates.block.blockThreshold*100, 1));
   }
 }
-
 function switchTab(map, mapLevel) {
   // Save current tab's state
   const activeTab = document.querySelector('.mapLevel-tab.active');
