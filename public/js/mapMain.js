@@ -1,5 +1,5 @@
 import {bounds, startAnimation, startTour, stopAnimation, selectYear, stopParcelPopcorns, 
-startParcelPopcorns, showTourStep, tourSteps, showPopup, handleMapTap, flyTourDivToHamburger, 
+startParcelPopcorns, tourSteps, showTourStep, showPopup, handleMapTap, flyTourDivToHamburger, 
 isMobile, addMapLegend, settingsUpdated, getFillExpression, groupHasCSVData, groupParcelsByGeometry, 
 hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
 // ===== Constants =====
