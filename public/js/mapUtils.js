@@ -1,5 +1,5 @@
  // ===== Helper Functions =====
-const blockThreshhold = .8;
+// const blockThreshhold = .8;
 export const bounds = [
   [-122.7247, 37.5934], // Southwest corner (lon, lat)
   [-122.1249, 37.8520]  // Northeast corner (lon, lat)
@@ -62,6 +62,7 @@ const groupHasTenant = (group, year) =>
 const groupHasFiled = (group, year) =>
   group.some(f => (f.properties.vacancy_by_year?.[year]?.filed).trim().toUpperCase() === 'YES');
 
+
 const groupHasVacant = (group, year) =>
   group.some(f => (f.properties.vacancy_by_year?.[year]?.vacant).trim().toUpperCase() === 'YES');
 
@@ -72,16 +73,22 @@ const makeBlockFilingIndicator = (f,year, threshhold) =>{
   const makeBlockStatus = (f.properties.vacancy_by_year?.[year]?.blk_filed /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-file': 'block-no-file';
  return  makeBlockStatus;
 }
-const makeGroupVacancyIndicator = (group, year, currentMode, blockThreshhold=.8) => {
+const makeBlockCompleteIndicator = (f,year, threshhold) =>{
+  const makeBlockStatus = (f.properties.vacancy_by_year?.[year]?.blk_complete /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-complete': 'block-no-complete';
+ return  makeBlockStatus;
+}
+const makeGroupVacancyIndicator = (group, year, currentMode) => {
   if (!groupHasCSVData(group, year)) return null;
-  const blockFiled = makeBlockFilingIndicator(group[0], year, blockThreshhold);
+  // const blockFiled = makeBlockFilingIndicator(group[0], year, tabStates.block.blockThreshold);
+  // const blockComplete = makeBlockCompleteIndicator(group[0], year, tabStates.block.blockThreshold);
   const hasOwner = groupHasOwner(group, year);
   const hasTenant = groupHasTenant(group, year);
   const hasVacant = groupHasVacant(group, year);
-
   switch (currentMode) {
     case 'blockfiling':
-      return groupHasFiled(group, year) ? 'block-file' : 'block-no-file';
+      return false ;
+    case 'blockfiling-blockcomplete':
+      return false ;
     case 'filing':
       return groupHasFiled(group, year) ? 'file' : 'no-file';
     case 'filing-ownertenant': {
@@ -109,7 +116,7 @@ const makeGroupVacancyIndicator = (group, year, currentMode, blockThreshhold=.8)
   }
 };
 
-const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy', blockThreshhold=.8) => {
+const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy') => {
   const rec = f.properties.vacancy_by_year?.[year];
   if (!rec) return;
   const vacant = String(rec.vacant || '').trim().toUpperCase() === 'YES';
@@ -119,7 +126,11 @@ const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy',
   const subtenant = !!rec.subtenant;
 
   if (currentMode === 'blockfiling') {
-    return (rec.blk_filed/rec.blk_total >= blockThreshhold) ? 'block-file' : 'block-no-file';
+    return (rec.blk_filed/rec.blk_total >=  tabStates.block.blockThreshold) ? 'block-file' : 'block-no-file';
+  }
+
+  if (currentMode === 'blockfiling-blockcomplete') {
+    return (rec.blk_complete/rec.blk_total >=  tabStates.block.blockThreshold) ? 'block-complete' : 'block-no-complete';
   }
 
   if (!filed) return 'no-file'; //if no filing, return 'no-file' without proceeding to logic below
@@ -218,11 +229,21 @@ export function getFillExpression (currentMode='filing-ownertenant-vacancy'){
   let fillColor, fillPattern, fillBlockColor;
   if (currentMode === 'blockfiling') {
     fillColor = [
-      'case', ['==', ['get', 'blockStatus'], 'block-no-file'], map_fill_nofile.color, map_fill_partcomplete2.color
+      'case', ['==', ['get', 'blockFilingStatus'], 'block-no-file'], map_fill_nofile.color, map_fill_partcomplete2.color
     ];
     fillPattern = [
       'case', 
-      ['==', ['get', 'blockStatus'], 'block-no-file'], map_fill_nofile.pattern, 
+      ['==', ['get', 'blockFilingStatus'], 'block-no-file'], map_fill_nofile.pattern, 
+      /* else */ map_fill_partcomplete2.pattern
+    ];
+  }
+  if (currentMode === 'blockfiling-blockcomplete') {
+    fillColor = [
+      'case', ['==', ['get', 'blockCompleteStatus'], 'block-no-complete'], map_fill_nofile.color, map_fill_partcomplete2.color
+    ];
+    fillPattern = [
+      'case', 
+      ['==', ['get', 'blockCompleteStatus'], 'block-no-complete'], map_fill_nofile.pattern, 
       /* else */ map_fill_partcomplete2.pattern
     ];
   }
@@ -322,6 +343,10 @@ const polygonToSVG = (feature, currentMode = 'filing-ownertenant-vacancy', vacan
     'blockfiling': {
       'file': map_fill_partcomplete2,
       'no-file': map_fill_nofile
+    },
+    'blockfiling-blockcomplete': {
+      'complete': map_fill_partcomplete2,
+      'no-complete': map_fill_nofile
     },
     'filing-vacancy': {
       'occupied': map_fill_partcomplete1,
@@ -483,7 +508,7 @@ function announce(msg) {
   document.getElementById('aria-live').textContent = msg;
 }
 
-const updateMapForYear = (map, geojsonData, year, mapLevel="building", blockThreshhold=.8) => {
+const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
   
   // showLoading(`${t("Loading year")} ${year}. ${t("One moment")}`);
   // Call announce() after major updates
@@ -503,7 +528,8 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building", blockThre
     properties: {
       ...group[0].properties,
       groupIndex: i,
-      blockStatus: makeBlockFilingIndicator(group[0], year, blockThreshhold),
+      blockFilingStatus: makeBlockFilingIndicator(group[0], year,  tabStates.block.blockThreshold),
+      blockCompleteStatus: makeBlockCompleteIndicator(group[0], year,  tabStates.block.blockThreshold),
       groupStatus: makeGroupVacancyIndicator(group, year, window.currentMode)
     }
   }});
@@ -537,7 +563,7 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building", blockThre
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;
   // window.showCitywide = false;
   clearAllPersistentPopups();
-  updateLegend(map, citywideStats, mapLevel, window.showCitywide, blockThreshhold) ;
+  updateLegend(map, citywideStats, mapLevel, window.showCitywide) ;
   // setProgress(90);
   return allFeatures;
 };
@@ -858,8 +884,8 @@ const el = ({ tag, class: className = '', id = '', innerHTML = '' }) => {
 const filterOptions = {    
   block: [
     { id: 'blockfiling', label: t('Show Block Filing Status') },
-    { id: 'pattern', label: t('Use Pattern for Fill') },
-    { id: 'threshhold', label: t('Threshhold %') }
+    { id: 'blockcomplete', label: t('Show Block Completion Status') },
+    { id: 'pattern', label: t('Use Pattern for Fill') }
   ],
   building: [
     { id: 'filing', label: t('Show Property Filing Status') },
@@ -870,64 +896,13 @@ const filterOptions = {
   ]
 };
 
-function switchTab(map, mapLevel) {
-  // Save current tab's state
-  const activeTab = document.querySelector('.mapLevel-tab.active');
-  const useMode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
-  saveCurrentTabState(useMode);
- 
-  document.querySelectorAll('.mapLevel-tab').forEach(tab => tab.classList.remove('active'));
-  document.getElementById(`tab-${mapLevel}`).classList.add('active');
-  checkboxesDiv.innerHTML = '';
-  buildCheckboxes(map, mapLevel);
-}
 function buildCheckboxes(map, mapLevel) {
-  checkboxesDiv.innerHTML = '';
-
+  checkboxesDiv.innerHTML = ''; 
   filterOptions[mapLevel].forEach((opt, idx) => {
-    const label = el({ tag: 'label', class: 'switch-label', id: 'switch-' + opt.id });
+    const label = el({ tag: 'label', class: 'switch-label', id:'switch-'+opt.id });
     const labelText = el({ tag: 'span', class: 'label-text' });
     labelText.textContent = opt.label;
-    if (mapLevel === 'block' && opt.id === 'threshhold') {
-      const container = el({ tag: 'div', class: 'slider-container' });
 
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.id = 'thresholdSlider';
-      slider.className = 'threshold-slider';
-      slider.min = 60;
-      slider.max = 100;
-      slider.step = 20;
-      slider.value = tabStates.block?.threshhold || 100;
-      slider.setAttribute('list', 'thresholdTicks');
-
-      const datalist = document.createElement('datalist');
-      datalist.id = 'thresholdTicks';
-      [ 60, 80, 100].forEach(val => {
-        const option = document.createElement('option');
-        option.value = val;
-        option.label = val + '%';
-        datalist.appendChild(option);
-      });
-
-      const output = document.createElement('span');
-      output.id = 'thresholdValue';
-      output.textContent = slider.value + '%';
-      output.className = 'slider-value';
-
-      slider.addEventListener('input', () => {
-        output.textContent = slider.value + '%';
-        tabStates.block.threshhold = parseInt(slider.value, 10);
-        settingsUpdated(map);
-      });
-
-      container.append(slider, output, datalist);
-      label.append(labelText, container);
-      checkboxesDiv.appendChild(label);
-      return;
-    }
-
-    // Regular checkbox logic
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'switch-input';
@@ -948,13 +923,15 @@ function buildCheckboxes(map, mapLevel) {
       labelText.style.color = '#aaa';
       labelText.style.cursor = 'not-allowed';
     }
-
+    //if you turn pattern fill on/off, change all tabs to this settings
     checkbox.addEventListener('change', () => {
       tabStates[mapLevel][opt.id] = checkbox.checked;
+
       if (opt.id === 'pattern') {
         const otherMapLevel = mapLevel === 'building' ? 'block' : 'building';
         tabStates[otherMapLevel]['pattern'] = checkbox.checked;
       }
+
       settingsUpdated(map);
     });
 
@@ -962,33 +939,41 @@ function buildCheckboxes(map, mapLevel) {
     label.append(labelText, checkbox, slider);
     checkboxesDiv.appendChild(label);
   });
+
+  // Add blockThreshold slider only for block mapLevel
+  if (mapLevel === 'block') {
+    const label = document.createElement('label');
+    label.className = 'switch-label';
+    label.id = 'switch-threshhold';
+  
+    // Label text span same as checkboxes
+    const labelText = document.createElement('span');
+    labelText.className = 'label-text';
+    labelText.textContent = 'Block %';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 1;
+    slider.max = 99;
+    slider.value = 100*tabStates.block.blockThreshold || 80;
+  
+    const valueDisplay = document.createElement('span');
+    valueDisplay.textContent = ` ${slider.value}`;
+
+    slider.addEventListener('input', () => {
+      tabStates.block.blockThreshold = (parseInt(slider.value, 10)/100).toFixed(2);
+      valueDisplay.textContent = ` ${slider.value}`;
+    });
+
+    slider.addEventListener('change', () => {
+      settingsUpdated(map);
+    });
+   
+    label.append(labelText, slider, valueDisplay);
+    checkboxesDiv.appendChild(label);
+  }
 }
 
-
-function makeLegendMinimize() {
-  const legendMinimize = document.getElementById('legend-minimize-container');
-  const titleMinText = el({
-          tag: 'div',
-          id: `legend-minimized-title-text`,
-          innerHTML:`${t("Legend")}`
-        });
-  const toggleLegendMin = el({
-          tag: 'div',
-          class:'map-toggle',
-          id: `legend-minimized`,
-          //TODO: swap plus for better char, e.g. the X is &#10006;
-          innerHTML:`&plus;`
-        });
-  legendMinimize.appendChild(titleMinText);
-  legendMinimize.appendChild(toggleLegendMin);
-  if (!legendMinimize) return;
-}
-const tabStates = {
-  building: {},
-  block: {}
-};
-
-//TODO: incorporate slider here
 function settingsUpdated(map) {
   const activeTab = document.querySelector('.mapLevel-tab.active');
   const mapLevel = activeTab ? activeTab.id.replace('tab-', '') : 'building';
@@ -1005,14 +990,48 @@ function settingsUpdated(map) {
   // modeParts.sort(); // Optional: sort for consistent mode strings like "filing" vs "vacancy-filing"
   window.currentMode = modeParts.join('-');
   const useYear = localStorage.getItem('preferredYear') || "2022";
+  let allFeatures = updateMapForYear(map, window.currentData, useYear, mapLevel);
+  setAllFeatures(allFeatures);
 
-  //TODO: get blockThreshhold from slider here, if it exists
-  let blockThreshhold=.8;
-  let allFeatures = updateMapForYear(map, window.currentData, useYear, mapLevel, blockThreshhold);
-    setAllFeatures(allFeatures);
-
-    // return {showCitywide, showPattern};
+  if (mapLevel === 'block') {
+    console.log('Block Threshold:', Math.round(tabStates.block.blockThreshold*100, 1));
+  }
 }
+
+function switchTab(map, mapLevel) {
+  // Save current tab's state
+  const activeTab = document.querySelector('.mapLevel-tab.active');
+  const useMode = activeTab ? activeTab.id.replace('tab-', '') : 'building';
+  saveCurrentTabState(useMode);
+ 
+  document.querySelectorAll('.mapLevel-tab').forEach(tab => tab.classList.remove('active'));
+  document.getElementById(`tab-${mapLevel}`).classList.add('active');
+  checkboxesDiv.innerHTML = '';
+  buildCheckboxes(map, mapLevel);
+}
+
+function makeLegendMinimize() {
+  const legendMinimize = document.getElementById('legend-minimize-container');
+  const titleMinText = el({
+          tag: 'div',
+          id: `legend-minimized-title-text`,
+          innerHTML:`${t("Legend")}`
+        });
+  const toggleLegendMin = el({
+          tag: 'div',
+          class:'map-toggle',
+          id: `legend-minimized`,
+          innerHTML:`&plus;`
+        });
+  legendMinimize.appendChild(titleMinText);
+  legendMinimize.appendChild(toggleLegendMin);
+  if (!legendMinimize) return;
+}
+const tabStates = {
+  building: {},
+  block: { blockThreshold: .80 }, 
+};
+
 const checkboxesDiv = el({ tag: 'div', class: 'legend-checkboxes', id: 'legend-checkboxes' });
   
 const mapLegend = document.getElementById('map-legend');
@@ -1107,7 +1126,7 @@ function saveCurrentTabState(mapLevel) {
 
 const prefYear = localStorage.getItem('preferredYear') || "2022";
 
-function updateLegend(map, citywide, mapLevel='building', showCitywide=false , blockThreshhold= .8) {
+function updateLegend(map, citywide, mapLevel='building', showCitywide=false, showPattern=false) {
   if (!citywide) return;
 
   // addMapLegend(map, prefYear) 
@@ -1121,14 +1140,18 @@ function updateLegend(map, citywide, mapLevel='building', showCitywide=false , b
   // Clear previous legend items
   legendItems.innerHTML = '';
 
-  const citywideLabels = {
+const citywideLabels = {
     "filing": [
       { var: "file", label: "Filed", fill: map_fill_partcomplete1 },
       { var: "no-file", label: "Did not file", fill: map_fill_nofile }
     ],
     "blockfiling": [
-      { var: "block-file", label: "Block where "+(blockThreshhold*100).toString()+"%+ of properties reported vacancy status", fill: map_fill_partcomplete2 },
-      { var: "block-no-file", label: "Block where less than "+(blockThreshhold*100).toString()+"% of properties reported vacancy status", fill: map_fill_nofile }
+      { var: "block-file", label: "Block where "+( tabStates.block.blockThreshold*100)+"%+ of properties reported vacancy status", fill: map_fill_partcomplete2 },
+      { var: "block-no-file", label: "Block where less than "+( tabStates.block.blockThreshold*100)+"% of properties reported vacancy status", fill: map_fill_nofile }
+    ],
+    "blockfiling-blockcomplete": [
+      { var: "block-complete", label: "Block where "+( tabStates.block.blockThreshold*100).toFixed(0)+"%+ of properties had a complete filing", fill: map_fill_partcomplete2 },
+      { var: "block-no-complete", label: "Block where less than "+( tabStates.block.blockThreshold*100).toFixed(0)+"% of properties had a complete filing", fill: map_fill_nofile }
     ],
     "filing-vacancy": [
       { var: "occupied", label: "'Occupied'", fill: map_fill_partcomplete1 },
@@ -1152,7 +1175,7 @@ function updateLegend(map, citywide, mapLevel='building', showCitywide=false , b
   let useMode = window.currentMode;
   let usePattern = window.showPattern;
   let useCitywide = window.showCitywide;
-  // Use currentMode and currentYear from your global/app context
+  // Use currentMode and currentYear from youcitywideLabelsr global/app context
   if (citywide[useMode] && citywideLabels[useMode]) {
 
     citywideLabels[useMode].forEach(item => {
@@ -1286,14 +1309,13 @@ if (!isMobile()) {
   modal.classList.add('hidden');
   modalBackground.classList.add('hidden');
 }
-}
-function makeDraggable(element, containerSelector = "#map-container") {
-  let offsetX = 0, offsetY = 0, isDragging = false;
-  let holdTimer;
-  const holdDelay = 400;
+}function makeDraggable(element, containerSelector = "#map-container") {
+  let offsetX = 0, offsetY = 0;
+  let isDragging = false;
+  let dragStarted = false;
+  let startX = 0, startY = 0;
 
   const container = document.querySelector(containerSelector);
-
   if (!container) {
     console.error("Map container not found!");
     return;
@@ -1301,20 +1323,34 @@ function makeDraggable(element, containerSelector = "#map-container") {
 
   element.classList.add('draggable');
 
-  // Mouse events
   element.onmousedown = function(e) {
-    e.preventDefault();
-    isDragging = true;
+    // Only left mouse button
+    if (e.button !== 0) return;
+
+    dragStarted = false;
+    isDragging = false;
+    startX = e.clientX;
+    startY = e.clientY;
 
     const rect = element.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+    offsetX = startX - rect.left;
+    offsetY = startY - rect.top;
 
-    document.onmousemove = function(e) {
-      if (!isDragging) return;
+    function onMouseMove(e) {
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+
+      if (!dragStarted) {
+        if (dx > 5 || dy > 5) { // threshold before drag begins
+          dragStarted = true;
+          isDragging = true;
+          // Optional: add dragging class, etc.
+        } else {
+          return; // Don't update position if below threshold
+        }
+      }
 
       const containerRect = container.getBoundingClientRect();
-      const elementRect = element.getBoundingClientRect();
 
       let newLeft = e.clientX - containerRect.left - offsetX;
       let newTop = e.clientY - containerRect.top - offsetY;
@@ -1328,50 +1364,60 @@ function makeDraggable(element, containerSelector = "#map-container") {
       element.style.position = "absolute";
       element.style.left = newLeft + "px";
       element.style.top = newTop + "px";
-    };
 
-    document.onmouseup = function() {
+      e.preventDefault(); // prevent text selection while dragging
+    }
+
+    function onMouseUp(e) {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
       isDragging = false;
-      document.onmousemove = null;
-      document.onmouseup = null;
-    };
+      dragStarted = false;
+      // Optional: remove dragging class, etc.
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   };
 
-  // Touch events
-  function startDrag(touchX, touchY) {
+  // Touch events, starting drag immediately on long press (hold)
+  let holdTimer;
+  let touchOffsetX = 0, touchOffsetY = 0;
+
+  function startTouchDrag(touchX, touchY) {
     isDragging = true;
     const rect = element.getBoundingClientRect();
-    offsetX = touchX - rect.left;
-    offsetY = touchY - rect.top;
+    touchOffsetX = touchX - rect.left;
+    touchOffsetY = touchY - rect.top;
   }
 
   element.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     holdTimer = setTimeout(() => {
-      startDrag(touch.clientX, touch.clientY);
-    }, holdDelay);
+      startTouchDrag(touch.clientX, touch.clientY);
+    }, 400); // hold delay
   }, { passive: true });
 
   element.addEventListener('touchmove', e => {
-    if (isDragging) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const containerRect = container.getBoundingClientRect();
+    if (!isDragging) return;
+    e.preventDefault();
 
-      let newLeft = touch.clientX - containerRect.left - offsetX;
-      let newTop = touch.clientY - containerRect.top - offsetY;
+    const touch = e.touches[0];
+    const containerRect = container.getBoundingClientRect();
 
-      const maxLeft = containerRect.width - element.offsetWidth;
-      const maxTop = containerRect.height - element.offsetHeight;
+    let newLeft = touch.clientX - containerRect.left - touchOffsetX;
+    let newTop = touch.clientY - containerRect.top - touchOffsetY;
 
-      newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-      newTop = Math.max(0, Math.min(newTop, maxTop));
+    const maxLeft = containerRect.width - element.offsetWidth;
+    const maxTop = containerRect.height - element.offsetHeight;
 
-      element.style.position = "absolute";
-      element.style.left = newLeft + "px";
-      element.style.top = newTop + "px";
-    }
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+
+    element.style.position = "absolute";
+    element.style.left = newLeft + "px";
+    element.style.top = newTop + "px";
   }, { passive: false });
 
   element.addEventListener('touchend', () => {
@@ -1379,6 +1425,7 @@ function makeDraggable(element, containerSelector = "#map-container") {
     isDragging = false;
   });
 }
+
 
 const years = ['2022', '2023', '2024'];
 //functions to help with animating across years
@@ -1424,9 +1471,7 @@ export function selectYear(map, idx) {
 
   localStorage.setItem('preferredYear', years[idx]);
 
-  //TODO: get blockThreshhold from slider here, if it exists
-  let blockThreshhold=.8;
-  let  allFeatures = updateMapForYear(map, window.currentData, years[idx],mapLevel, blockThreshhold);
+  let  allFeatures = updateMapForYear(map, window.currentData, years[idx],mapLevel);
   setAllFeatures(allFeatures);
 }
 
@@ -1572,23 +1617,15 @@ export function showTourStep(map, stepIndex) {
   const ownertenant = document.getElementById('ownertenant');
   const vacancy = document.getElementById('vacancy');
   const resetAndHighlight = (legendItems, targetItemID)=>{
-      if (['block-file', 'block-no-file'].includes(targetItemID)){
+      if (['block-file', 'block-no-file', 'block-no-complete', 'block-complete'].includes(targetItemID)){
         map.setPaintProperty('block-layer', 'fill-opacity', 0.2);
         map.setPaintProperty('building-layer', 'fill-opacity', 0.2);
         map.setPaintProperty('pattern-layer', 'fill-opacity', 0.2);
         map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
-        // map.setFilter('block-highlight', ['==', 'blockStatus', '']);
-        if (map.getLayer && map.getLayer('block-highlight')) {
-          map.setFilter('block-highlight', ['==', 'blockStatus', targetItemID]);
-        } else {
-          console.warn("block-highlight not on map");
-        }
-        // map.setFilter('block-highlight', ['==', 'blockStatus', targetItemID]);
       }
       else if  (['complete-file', 'owner-only-vacant', 'owner-only-occupied' ,'no-file'].includes(targetItemID)){
         map.setPaintProperty('building-layer', 'fill-opacity', 0.2);
         map.setPaintProperty('pattern-layer', 'fill-opacity', 0.2);
-        map.setFilter('block-highlight', ['==', 'blockStatus', '']);
         map.setFilter('polygon-highlight', ['==', 'groupStatus', targetItemID]);  
       }
 
@@ -1753,7 +1790,6 @@ function makeExitTour(map) {
     map.setPaintProperty('building-layer', 'fill-opacity', 1);
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
-    map.setFilter('block-highlight', ['==', 'blockStatus', '']);
     document.getElementById('tour-tooltip').classList.add('hidden');
     document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));  
   }  

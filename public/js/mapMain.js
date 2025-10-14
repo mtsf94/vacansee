@@ -31,12 +31,14 @@ hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithPro
 // ===== Constants =====
 const protocol = new pmtiles.Protocol();
 
+  maplibregl.addProtocol("pmtiles", protocol.tile);
 const animation_duration = 1300; // ms
 let cloudFrontURL = "https://cdn.vacansee.org";
-const parcelsUrl = cloudFrontURL + '/data/parcels_with_frontage100725.geojson';
+const parcelsUrl = cloudFrontURL + '/data/parcels_with_frontage101425.geojson';
 //defining the possible modes we might see on the map
 export const allModes = [
     'blockfiling',
+    'blockfiling-blockcomplete',
     'filing',
     'filing-ownertenant-vacancy',
     'filing-vacancy',

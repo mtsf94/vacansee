@@ -16,7 +16,7 @@ const { streamArray } = require('stream-json/streamers/StreamArray');
 const geojsonPath = '../archive/archive_data/Parcels Active and Retired_20250612.geojson';
 
 //source: https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data
-const csvPath = '../data/Taxable_Commercial_Spaces_20250613.csv';
+const csvPath = '../data/Taxable_Commercial_Spaces_20251014.csv';
 // const csvPath = '../data/Taxable_Commercial_Spaces_20251007.csv';
 const outputPath2 = '../data/parcels_with_frontage.geojson';
 
@@ -233,12 +233,13 @@ function getBlockKey(feature) {
     return acc;
   }, {});
 
-  // Calculate block statistics: blk_filed and blk_total per block and year
+  // Calculate block statistics: blk_filed, blk_complete and blk_total per block and year
   const blockStats = {};
   for (const blk in blockGroups) {
     const featuresInBlock = blockGroups[blk];
     blockStats[blk] = {
       blk_total: featuresInBlock.length,
+      blk_complete_by_year: {},
       blk_filed_by_year: {}
     };
     // Collect all years across this block’s features
@@ -254,7 +255,16 @@ function getBlockKey(feature) {
         const filedValue = f.properties.vacancy_by_year?.[year]?.filed || "NO";
         return count + (filedValue.toUpperCase() === "YES" ? 1 : 0);
       }, 0);
+       const completeCount = featuresInBlock.reduce((count, f) => {
+        const tenantValue = f.properties.vacancy_by_year?.[year]?.tenant || "NO";
+        const vacantValue = f.properties.vacancy_by_year?.[year]?.vacant || "NO";
+        const ownerValue = f.properties.vacancy_by_year?.[year]?.owner || "NO";
+        const tenantComplete = (Array.isArray(tenantValue)|| tenantValue.toUpperCase() != "NO" ) || (vacantValue != "NO");
+        return count + ((tenantComplete
+                        && (Array.isArray(ownerValue)|| ownerValue.toUpperCase() != "NO" ) ) ? 1 : 0);
+      }, 0);
       blockStats[blk].blk_filed_by_year[year] = filedCount;
+      blockStats[blk].blk_complete_by_year[year] = completeCount;
     });
   }
 
@@ -273,6 +283,7 @@ function getBlockKey(feature) {
     const byYear = feature.properties.vacancy_by_year || {};
     Object.keys(byYear).forEach(year => {
       byYear[year].blk_filed = String(stats.blk_filed_by_year[year] || 0);
+      byYear[year].blk_complete= String(stats.blk_complete_by_year[year] || 0);
       byYear[year].blk_total = String(stats.blk_total);
     });
   });

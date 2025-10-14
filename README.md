@@ -51,6 +51,10 @@ Just copy and paste this code:
 
 ## Changelog
 
+### 2025-10-13
+- Adding block-mode slider
+- Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20251014.geojson), which includes 5,104 parcels at this time. 
+
 ### 2025-10-11
 - Updating map JS to use Protomaps and PM tiles
 - Move CDN and update links

@@ -3,7 +3,7 @@
   "sources": {
       "protomaps": { 
         "type": "vector",
-        "url": "pmtiles://https://cdn.vacansee.org/PMTiles/SFmap.pmtiles",
+        "url": "pmtiles://https://cdn.vacansee.org/SFmap.pmtiles",
         "minzoom": 0,
         "maxzoom": 15,
         "scheme": "xyz"
