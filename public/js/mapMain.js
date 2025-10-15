@@ -1,6 +1,6 @@
 import {bounds, startAnimation, startTour, stopAnimation, selectYear, stopParcelPopcorns, 
 startParcelPopcorns, tourSteps, showTourStep, showPopup, handleMapTap, flyTourDivToHamburger, 
-isMobile, addMapLegend, settingsUpdated, getFillExpression, groupHasCSVData, groupParcelsByGeometry, 
+isMobile, addMapLegend, settingsUpdated, groupHasCSVData, groupParcelsByGeometry, 
 hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
 // ===== Constants =====
 const protocol = new pmtiles.Protocol();
@@ -122,7 +122,7 @@ setProgress(95);
           return groupHasCSVData(group, year)}
         );
         setAllFeatures(allFeatures);
-        let  initialFillColorExpression = getFillExpression(window.currentMode).color;
+        // let  initialFillColorExpression = fillColor;
         map.addSource('parcels', { type: 'geojson', data: parcelsData });
         map.addLayer({
           id: 'parcels-layer',

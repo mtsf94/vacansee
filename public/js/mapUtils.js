@@ -1,33 +1,80 @@
- // ===== Helper Functions =====
-// const blockThreshhold = .8;
+// ===== Imports ======
+import {getAllFeatures, setAllFeatures, allModes, savedYear, map_fill_vac, map_fill_nofile, map_fill_complete, map_fill_partcomplete1, map_fill_partcomplete2} from './mapMain.js';
+
+// ===== Constants =====
 export const bounds = [
   [-122.7247, 37.5934], // Southwest corner (lon, lat)
   [-122.1249, 37.8520]  // Northeast corner (lon, lat)
 ];  
+
 let currentMode = 'filing-ownertenant-vacancy'
-
-const geometryHash = geo => JSON.stringify(geo.coordinates);
-import {getAllFeatures, setAllFeatures, allModes, savedYear, map_fill_vac, map_fill_nofile, map_fill_complete, map_fill_partcomplete1, map_fill_partcomplete2} from './mapMain.js';
-
 let allFeatures = [];
 
+const hideTenantNames = true;
+
+// Fill properties for each status
+const fillSpecification = {
+  'block-file':  map_fill_partcomplete2,
+  'block-no-file':  map_fill_nofile,
+  'block-complete': map_fill_partcomplete2,
+  'file': map_fill_partcomplete1,
+  'no-file': map_fill_nofile,
+  'tenant-only': map_fill_partcomplete1,
+  'owner-only': map_fill_partcomplete2,
+  'complete-file': map_fill_complete,
+  'owner-only-occupied': map_fill_partcomplete2,
+  'owner-only-vacant': map_fill_vac,
+};
+
+const filterOptions = {    
+  block: [
+    { id: 'blockfiling', label: t('Show Block Filing Status') },
+    { id: 'blockcomplete', label: t('Show Block Completion Status') },
+    { id: 'pattern', label: t('Use Pattern for Fill') }
+  ],
+  building: [
+    { id: 'filing', label: t('Show Property Filing Status') },
+    { id: 'ownertenant', label: t('Show Owner/Tenant Status') },
+    { id: 'vacancy', label: t('Show Vacancy Status') },
+    { id: 'citywide', label: t('Show Citywide Percentages') },
+    { id: 'pattern', label: t('Use Pattern for Fill') }
+  ]
+};
+
+export const websiteName = "VacanSee";
+export const websiteNameMap = "the VacanSee map";
+export const textWelcome = t("Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.");
+export const textWelcome2 = t("Since 2022, San Francisco has had a tax, passed as Prop D, on keeping certain commercial space vacant.");
+export const textZoomToBuildings = t("Zoom into a neighborhood to explore a building-level map.");
+export const textLegend = t("This legend explains the map's colors and symbols.");
+export const textBuildingComplete= t("In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.");
+export const textBuildingNoneFiled = t("In other properties, no returns were filed at all.");
+export const textGear = t("Click this gear to open the settings menu.");
+export const textSettings = t("Use the settings menu to:\n change the map's appearance.");
+export const textChangeToBlocks = t("Use the settings menu to:\n map block-level statistics instead of buildings.");
+export const textChangeBackToBuildings = t("Use the settings menu to:\n change back to a building-level map.");
+export const textAddPattern = t("Use the settings menu to:\n add patterns for improved accessibility.");
+export const textDisplayAverage = t("Use the settings menu to:\n display citywide averages in the legend.");
+export const textChangeFeatures = t("Use the settings menu to:\n change which features appear on the map.");
+export const textTimeline = t("Use the timeline above the map to:\n view data for different years.");
+export const textTimeline2 = t("Use the timeline above the map to:\n change the year.");
+export const textPropertyDetails = t("Click on any property for more details.");
+export const textDone = t("That's it! Now you can explore the map");
+
+// ===== Helper Functions =====
+
+//some units have the same geometry but different properties (i.e. 1st floor, 2nd floor)
 const groupParcelsByGeometry = features => {
   const allFeatures = {};
   features.forEach(f => {
     if (!(f.geometry)) return;
-    const h = geometryHash(f.geometry);
+    const h = JSON.stringify(f.geometry.coordinates);
     (allFeatures[h] = allFeatures[h] || []).push(f);
   });
   return Object.values(allFeatures);
 };
 
-const getMainAddress = f => {
-  const { from_address_num, street_name, street_type, parcelsitusaddress } = f.properties;
-  return from_address_num && street_name && street_type
-    ? `${from_address_num} ${street_name} ${street_type}`.trim()
-    : parcelsitusaddress || '';
-};
-
+//functions to check for valid values
 const safeVal = (v) => {
   const value = String(v).trim();
   if (v == null || value === '') {
@@ -45,6 +92,8 @@ const safeVal = (v) => {
 const renderVal = (v) =>
   !v ? t("Not Reported") : Array.isArray(v) ? v.join(', ') : v;
 
+
+//functions to aggregate parcel information
 const groupHasCSVData = (group, year) =>
   group.some(f => f.properties.vacancy_by_year?.[year] && Object.keys(f.properties.vacancy_by_year[year]).length);
 
@@ -59,60 +108,16 @@ const groupHasOwner = (group, year) =>
 const groupHasTenant = (group, year) =>
   group.some(f => (isReported(f.properties.vacancy_by_year?.[year]?.tenant)||isReported(f.properties.vacancy_by_year?.[year]?.subtenant)));
 
-const groupHasFiled = (group, year) =>
-  group.some(f => (f.properties.vacancy_by_year?.[year]?.filed).trim().toUpperCase() === 'YES');
+const groupHasSome = (group, year, property, value) =>
+  group.some(f => (f.properties.vacancy_by_year?.[year]?.[property]).trim().toUpperCase() === 'YES');
 
-
-const groupHasVacant = (group, year) =>
-  group.some(f => (f.properties.vacancy_by_year?.[year]?.vacant).trim().toUpperCase() === 'YES');
-
-const groupHasOccupied = (group, year) =>
-  group.some(f => (f.properties.vacancy_by_year?.[year]?.vacant).trim().toUpperCase() === 'NO');
-
-const makeBlockFilingIndicator = (f,year, threshhold) =>{
-  const makeBlockStatus = (f.properties.vacancy_by_year?.[year]?.blk_filed /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-file': 'block-no-file';
- return  makeBlockStatus;
+const makeBlockIndicator = (f,year, threshhold) =>{
+  const returnObject = {
+    "filing":    (f.properties.vacancy_by_year?.[year]?.blk_filed /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-file': 'block-no-file',
+    "complete":  (f.properties.vacancy_by_year?.[year]?.blk_complete /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-complete': 'block-no-complete'
+  };
+  return returnObject;
 }
-const makeBlockCompleteIndicator = (f,year, threshhold) =>{
-  const makeBlockStatus = (f.properties.vacancy_by_year?.[year]?.blk_complete /f.properties.vacancy_by_year?.[year]?.blk_total >= threshhold)  ? 'block-complete': 'block-no-complete';
- return  makeBlockStatus;
-}
-const makeGroupVacancyIndicator = (group, year, currentMode) => {
-  if (!groupHasCSVData(group, year)) return null;
-  const hasOwner = groupHasOwner(group, year);
-  const hasTenant = groupHasTenant(group, year);
-  const hasVacant = groupHasVacant(group, year);
-  switch (currentMode) {
-    case 'blockfiling':
-      return false ;
-    case 'blockfiling-blockcomplete':
-      return false ;
-    case 'filing':
-      return groupHasFiled(group, year) ? 'file' : 'no-file';
-    case 'filing-ownertenant': {
-      if (hasOwner && (hasTenant||hasVacant)) return 'complete-file';
-      if (hasOwner && !hasVacant) return 'owner-only';
-      if (hasTenant) return 'tenant-only';
-      return groupHasFiled(group, year) ? 'file' : 'no-file';
-    }
-
-    case 'filing-vacancy': {
-      if (groupHasVacant(group, year)) return 'vacant';
-      if (groupHasOccupied(group, year)) return 'occupied';
-      return groupHasFiled(group, year) ? 'file' : 'no-file';
-    }
-
-    case 'filing-ownertenant-vacancy': {
-      if (!hasOwner && hasTenant) return 'tenant-only';
-      if (hasOwner && !hasTenant && hasVacant) return 'owner-only-vacant';
-      if (hasOwner && !hasTenant && !hasVacant) return 'owner-only-occupied';
-      if (hasOwner && hasTenant) return 'complete-file';
-      return groupHasFiled(group, year) ? 'file' : 'no-file';
-    }
-    default:
-      return null;
-  }
-};
 
 const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy') => {
   const rec = f.properties.vacancy_by_year?.[year];
@@ -155,6 +160,24 @@ const makeVacancyIndicator = (f, year, currentMode='filing-ownertenant-vacancy')
   else return 'no-file';
 };
 
+const makeGroupVacancyIndicator = (group, year, currentMode) => {
+  if (!groupHasCSVData(group, year)) return null;
+
+  //in cases where a parcel has multiple units with differing vacancy statuses, need to specify which status is used for the color on map (citywide stats are calculated per unit, so this doesn't affect those)
+  const groupedVacancyIndicator = group.map(e =>makeVacancyIndicator(e, year, currentMode)); 
+
+  if (currentMode ===  'blockfiling'|| currentMode ===  'blockfiling-blockcomplete') return false;
+
+  return  groupedVacancyIndicator.includes('complete-file')? 'complete-file': 
+          groupedVacancyIndicator.includes('owner-only') ? 'owner-only':
+          groupedVacancyIndicator.includes('tenant-only') ? 'tenant-only':  
+          groupedVacancyIndicator.includes('owner-only-vacant') ? 'owner-only-vacant' : 
+          groupedVacancyIndicator.includes('owner-only-occupied') ? 'owner-only-occupied' :  
+          groupedVacancyIndicator.includes('vacant')? 'vacant': 
+          groupedVacancyIndicator.includes('occupied') ? 'occupied': 
+          groupedVacancyIndicator.includes('file')? 'file': 'no-file';
+};
+
 //create a function to read the big file and provide status updates
 async function fetchWithProgress(url, onProgress) {
   const res = await fetch(url);
@@ -166,7 +189,7 @@ async function fetchWithProgress(url, onProgress) {
   let total = res.headers.get('Content-Length');
   //hardcode total if the file was received compressed (i.e. smaller than 1MB as we know file is ~5MB)
   if (total<1000000) {
-    total = 5000000;
+    total = 5500000;
   }
 
   //set up and read the data 
@@ -216,102 +239,25 @@ const setProgress = pct =>{
 }
 
 // ===== Map Functions =====
-const removeLayersForSource = (map, sourceId) => {
 
-  (map.getStyle().layers || []).forEach(layer => {
-    if (layer.source === sourceId && map.getLayer(layer.id)) map.removeLayer(layer.id);
-  });
-};
-
-export function getFillExpression (currentMode='filing-ownertenant-vacancy'){
-  let fillColor, fillPattern, fillBlockColor;
-  if (currentMode === 'blockfiling') {
-    fillColor = [
-      'case', ['==', ['get', 'blockFilingStatus'], 'block-no-file'], map_fill_nofile.color, map_fill_partcomplete2.color
-    ];
-    fillPattern = [
-      'case', 
-      ['==', ['get', 'blockFilingStatus'], 'block-no-file'], map_fill_nofile.pattern, 
-      /* else */ map_fill_partcomplete2.pattern
-    ];
+// Build expression for color and pattern
+function buildCaseExpression(currentMode, fillProperty = 'color') {
+  let property = 'groupStatus';
+  if (currentMode === "blockfiling") {
+    property = "blockFilingStatus";
   }
-  if (currentMode === 'blockfiling-blockcomplete') {
-    fillColor = [
-      'case', ['==', ['get', 'blockCompleteStatus'], 'block-no-complete'], map_fill_nofile.color, map_fill_partcomplete2.color
-    ];
-    fillPattern = [
-      'case', 
-      ['==', ['get', 'blockCompleteStatus'], 'block-no-complete'], map_fill_nofile.pattern, 
-      /* else */ map_fill_partcomplete2.pattern
-    ];
+  if (currentMode === "blockfiling-blockcomplete") {
+    property = "blockCompleteStatus";
   }
-   if (currentMode === 'filing') {
-    fillColor = [
-      'case', ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color, map_fill_partcomplete1.color
-    ];
-    fillPattern = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern, 
-      /* else */ map_fill_partcomplete1.pattern
-    ];
+  const expr = ['case'];
+  for (const [status, fill] of Object.entries(fillSpecification)) {
+    expr.push(['==', ['get', property], status], fill[fillProperty]);
   }
-  else if (currentMode === 'filing-vacancy') {
-    fillColor = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'occupied'], map_fill_partcomplete1.color,
-      ['==', ['get', 'groupStatus'], 'vacant'], map_fill_vac.color,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color,
-      /* else */ map_fill_nofile.color
-    ];
-    fillPattern = [
-       'case', 
-      ['==', ['get', 'groupStatus'], 'occupied'], map_fill_partcomplete1.pattern,
-      ['==', ['get', 'groupStatus'], 'vacant'], map_fill_vac.pattern,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern,
-      /* else */ map_fill_nofile.pattern
-    ];
-
-  } 
-  else if (currentMode === 'filing-ownertenant') {
-    fillColor = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'tenant-only'],  map_fill_partcomplete1.color,
-      ['==', ['get', 'groupStatus'], 'owner-only'], map_fill_partcomplete2.color,
-      ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.color,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color,
-      /* else */ map_fill_nofile.color
-    ];
-    fillPattern = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'tenant-only'],  map_fill_partcomplete1.pattern,
-      ['==', ['get', 'groupStatus'], 'owner-only'], map_fill_partcomplete2.pattern,
-      ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.pattern,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern,
-      /* else */ map_fill_nofile.pattern
-    ];
-  } 
-  else if (currentMode === 'filing-ownertenant-vacancy') {
-    fillColor = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'tenant-only'], map_fill_partcomplete1.color,
-      ['==', ['get', 'groupStatus'], 'owner-only-occupied'], map_fill_partcomplete2.color,
-      ['==', ['get', 'groupStatus'], 'owner-only-vacant'], map_fill_vac.color,
-      ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.color,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.color,
-      /* else */ map_fill_nofile.color
-    ];
-    fillPattern = [
-      'case', 
-      ['==', ['get', 'groupStatus'], 'tenant-only'], map_fill_partcomplete1.pattern,
-      ['==', ['get', 'groupStatus'], 'owner-only-occupied'], map_fill_partcomplete2.pattern,
-      ['==', ['get', 'groupStatus'], 'owner-only-vacant'], map_fill_vac.pattern,
-      ['==', ['get', 'groupStatus'], 'complete-file'], map_fill_complete.pattern,
-      ['==', ['get', 'groupStatus'], 'no-file'], map_fill_nofile.pattern,
-      /* else */ map_fill_nofile.pattern
-    ];
-  }
-  return { 'color': fillColor, 'pattern': fillPattern };
+  //default value:
+  expr.push(map_fill_nofile[fillProperty]);
+  return expr;
 }
+
 const polygonToSVG = (feature, currentMode = 'filing-ownertenant-vacancy', vacancy_indicator = 'present', centerText = false) => {
   const size = 80;
   const geometry = feature.geometry;
@@ -333,39 +279,7 @@ const polygonToSVG = (feature, currentMode = 'filing-ownertenant-vacancy', vacan
   const width = maxX - minX || 1, height = maxY - minY || 1;
 
   // Color lookup by mode and indicator
-  const colorLookup = {
-    'filing': {
-      'block-file': map_fill_partcomplete1,
-      'block-no-file': map_fill_nofile
-    },
-    'blockfiling': {
-      'file': map_fill_partcomplete2,
-      'no-file': map_fill_nofile
-    },
-    'blockfiling-blockcomplete': {
-      'complete': map_fill_partcomplete2,
-      'no-complete': map_fill_nofile
-    },
-    'filing-vacancy': {
-      'occupied': map_fill_partcomplete1,
-      'vacant': map_fill_vac,
-      'no-file': map_fill_nofile
-    },
-    'filing-ownertenant': {
-      'tenant-only': map_fill_partcomplete2,
-      'owner-only': map_fill_vac,
-      'complete-file': map_fill_complete,
-      'no-file': map_fill_nofile
-    },
-    'filing-ownertenant-vacancy': {
-      'complete-file': map_fill_complete,
-      'tenant-only': map_fill_partcomplete1,
-      'owner-only-occupied': map_fill_partcomplete2,
-      'owner-only-vacant': map_fill_vac,
-      'no-file': map_fill_nofile
-    }
-  };
-  let frontageColor = colorLookup[currentMode]?.[vacancy_indicator]?.color || map_fill_partcomplete1.color;
+  let frontageColor = fillSpecification[vacancy_indicator]?.color || map_fill_partcomplete1.color;
 
   // Process polygon coordinates and generate SVG
   const processPolygon = (coords, frontageIndices) => {
@@ -426,7 +340,6 @@ const polygonToSVG = (feature, currentMode = 'filing-ownertenant-vacancy', vacan
 const getParcelTooltip = (group, year) => {
   group = group.filter(p => p.properties.vacancy_by_year?.[year]);
   const isMultiunit = group.length > 1;
-  const mainAddress = getMainAddress(group[0]);
   const sorted = group.slice().sort((a, b) =>
     ((a.properties.parcelsitusaddress ||  '').toUpperCase())
       .localeCompare((b.properties.parcelsitusaddress|| '').toUpperCase(), undefined, { numeric: true })
@@ -446,7 +359,7 @@ const getParcelTooltip = (group, year) => {
   let tip = `
     <div class="tooltip-flex-col">
       <div class="tooltip-flex-row">
-      <div class="building-info"> <b> ${mainAddress}</b>
+      <div class="building-info"> <b> ${group[0].properties.parcelsitusaddress || 'NA'}</b>
   `;
 
    tip += `<br><span class="frontage-label" >${t("Est. Frontage")}</span>: ${safeVal(firstFeature.properties.street_frontage_ft ? firstFeature.properties.street_frontage_ft.toLocaleString() + "'" : null)}`;
@@ -474,11 +387,9 @@ const getParcelTooltip = (group, year) => {
     let printTenant = renderVal(r.tenant);
     let printSubtenant = renderVal(r.subtenant);
     if (renderVal(r.tenant) ==t("Not Reported")){
-      let printTenant = printSubtenant;
+      printTenant = printSubtenant;
     }
-    const hideNames = true;
-    if (hideNames){
-      // printOwner = (renderVal(r.owner) === t("Not Reported"))?  t("Not Filed"): t("Filed");
+    if (hideTenantNames){
       printTenant = (renderVal(r.tenant) === t("Not Reported"))? ((renderVal(r.subtenant) === t("Not Reported")) ? t("Not Filed"):renderVal(r.subtenant) ) : t("Filed");
     }
   
@@ -502,16 +413,8 @@ const getParcelTooltip = (group, year) => {
   return tip;
 };
 
-function announce(msg) {
-  document.getElementById('aria-live').textContent = msg;
-}
-
 const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
   
-  // showLoading(`${t("Loading year")} ${year}. ${t("One moment")}`);
-  // Call announce() after major updates
-  announce(`${t("Map updated for year")} ${year}`);
-
   clearAllTooltips();
   const allFeatures = groupParcelsByGeometry(geojsonData.features)
     .filter(group => {
@@ -519,15 +422,14 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
       );
 
   const groupedFeatures = allFeatures.map((group, i) => { 
- 
     return {
     type: "Feature",
     geometry: group[0].geometry,
     properties: {
       ...group[0].properties,
       groupIndex: i,
-      blockFilingStatus: makeBlockFilingIndicator(group[0], year,  tabStates.block.blockThreshold),
-      blockCompleteStatus: makeBlockCompleteIndicator(group[0], year,  tabStates.block.blockThreshold),
+      blockFilingStatus: makeBlockIndicator(group[0], year,  tabStates.block.blockThreshold).filing,
+      blockCompleteStatus: makeBlockIndicator(group[0], year,  tabStates.block.blockThreshold).complete,
       groupStatus: makeGroupVacancyIndicator(group, year, window.currentMode)
     }
   }});
@@ -535,33 +437,34 @@ const updateMapForYear = (map, geojsonData, year, mapLevel="building") => {
     type: "FeatureCollection",
     features: groupedFeatures
   });
-  const newFillExpression = getFillExpression(window.currentMode);
-  map.setPaintProperty('building-layer', 'fill-color', newFillExpression.color);
+
+  let fillObject = {"color": buildCaseExpression(window.currentMode, 'color'),
+                  "pattern": buildCaseExpression(window.currentMode, 'pattern')};
+
+  map.setPaintProperty('building-layer', 'fill-color', fillObject.color);
   map.setPaintProperty('building-layer', 'fill-opacity', 1);
 
-  map.setPaintProperty('polygon-highlight', 'fill-color',  newFillExpression.color);
-  map.setPaintProperty('block-highlight', 'fill-color',  newFillExpression.color);
+  map.setPaintProperty('polygon-highlight', 'fill-color',  fillObject.color);
+  map.setPaintProperty('block-highlight', 'fill-color',  fillObject.color);
 
-  map.setPaintProperty('block-layer', 'fill-color',  newFillExpression.color);
+  map.setPaintProperty('block-layer', 'fill-color',  fillObject.color);
 
   map.setPaintProperty('pattern-layer', 'fill-opacity', 1); 
-  map.setPaintProperty('pattern-layer', 'fill-pattern',  newFillExpression.pattern);
+  map.setPaintProperty('pattern-layer', 'fill-pattern',  fillObject.pattern);
   
-  // hideLoading();
   document.getElementById('aboutmap-frame').classList.remove('hidden');
-  // document.getElementById('navbar').classList.remove('hidden');
   if (document.getElementById('navbar-left')){
     document.getElementById('navbar-left').classList.remove('hidden');
   }
   if (document.getElementById('footer')){
     document.getElementById('footer').classList.remove('hidden');
   }
+ 
   // Compute combinations for the currently visible features
   const currentYear = window.currentYear || "2022";
   let citywideStats = computeCitywideStats(window.currentData.features, currentYear) ;
   clearAllPersistentPopups();
   updateLegend(map, citywideStats, mapLevel, window.showCitywide) ;
-  // setProgress(90);
   return allFeatures;
 };
 
@@ -663,27 +566,6 @@ const clearAllPersistentPopups = () => {
   persistentPopups.forEach(p => p.remove());
   persistentPopups = [];
 };
-
- // Helper functions to create SVG arc paths for circle sectors
-function polarToCartesian(cx, cy, r, angleInDegrees) {
-  var angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-  return {
-    x: cx + (r * Math.cos(angleInRadians)),
-    y: cy + (r * Math.sin(angleInRadians))
-  };
-}
-
-function describeArc(cx, cy, r, startAngle, endAngle) {
-  var start = polarToCartesian(cx, cy, r, endAngle);
-  var end = polarToCartesian(cx, cy, r, startAngle);
-  var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return [
-    "M", cx, cy,
-    "L", start.x, start.y,
-    "A", r, r, 0, largeArcFlag, 0, end.x, end.y,
-    "Z"
-  ].join(" ");
-}
 
 function animateParabolicPopcornSVG(map, feature) {
   let year= window.currentYear || "2022"
@@ -876,21 +758,6 @@ const el = ({ tag, class: className = '', id = '', innerHTML = '' }) => {
   if (id) e.id = id;
   if (innerHTML) e.innerHTML = innerHTML;
   return e;
-};
-
-const filterOptions = {    
-  block: [
-    { id: 'blockfiling', label: t('Show Block Filing Status') },
-    { id: 'blockcomplete', label: t('Show Block Completion Status') },
-    { id: 'pattern', label: t('Use Pattern for Fill') }
-  ],
-  building: [
-    { id: 'filing', label: t('Show Property Filing Status') },
-    { id: 'ownertenant', label: t('Show Owner/Tenant Status') },
-    { id: 'vacancy', label: t('Show Vacancy Status') },
-    { id: 'citywide', label: t('Show Citywide Percentages') },
-    { id: 'pattern', label: t('Use Pattern for Fill') }
-  ]
 };
 
 function buildCheckboxes(map, mapLevel) {
@@ -1419,7 +1286,6 @@ if (!isMobile()) {
   });
 }
 
-
 const years = ['2022', '2023', '2024'];
 //functions to help with animating across years
 let animateInterval = null;
@@ -1468,27 +1334,6 @@ export function selectYear(map, idx) {
   setAllFeatures(allFeatures);
 }
 
-export const websiteName = "VacanSee";
-export const websiteNameMap = "the VacanSee map";
-// Reusable text strings
-export const textWelcome = t("Welcome! VacanSee.org explores San Francisco's commercial vacancy tax data.");
-export const textWelcome2 = t("Since 2022, San Francisco has had a tax, passed as Prop D, on keeping certain commercial space vacant.");
-export const textZoomToBuildings = t("Zoom into a neighborhood to explore a building-level map.");
-export const textLegend = t("This legend explains the map's colors and symbols.");
-export const textBuildingComplete= t("In some properties marked as 'occupied,' both owners and tenants filed returns, as required by Prop D.");
-export const textBuildingNoneFiled = t("In other properties, no returns were filed at all.");
-export const textGear = t("Click this gear to open the settings menu.");
-export const textSettings = t("Use the settings menu to:\n change the map's appearance.");
-export const textChangeToBlocks = t("Use the settings menu to:\n map block-level statistics instead of buildings.");
-export const textChangeBackToBuildings = t("Use the settings menu to:\n change back to a building-level map.");
-export const textAddPattern = t("Use the settings menu to:\n add patterns for improved accessibility.");
-export const textDisplayAverage = t("Use the settings menu to:\n display citywide averages in the legend.");
-export const textChangeFeatures = t("Use the settings menu to:\n change which features appear on the map.");
-export const textTimeline = t("Use the timeline above the map to:\n view data for different years.");
-export const textTimeline2 = t("Use the timeline above the map to:\n change the year.");
-export const textPropertyDetails = t("Click on any property for more details.");
-export const textDone = t("That's it! Now you can explore the map");
-
 // Reusable map center/zoom configurations
 let mapDefault = { center: [-122.4394, 37.7719] , zoom: 12, bearing: 0, pitch: 0 };
 let mapZoomedNeighborhood = { center: [-122.4775311897324, 37.779998143], zoom: 16 };
@@ -1500,54 +1345,23 @@ if (neighborhood.name != "all"){
 
 // Tour steps array using the variables
 export const tourSteps = [
-  {
-    text: textWelcome,
-    map: mapDefault,
-    // highlight: "#aboutmap"
-  },
+  { text: textWelcome,    map: mapDefault  }, // highlight: "#aboutmap"  },
   { text: textWelcome2  },
-  {
-    text: textZoomToBuildings,
-    map: mapZoomedNeighborhood,
-    // highlight: "#aboutmap"
-  },
-  {
-    text: textLegend,
-    highlight: "#map-legend"
-  },
+  { text: textZoomToBuildings, map: mapZoomedNeighborhood},
+  { text: textLegend,          highlight: "#map-legend"  },
   { text: textBuildingComplete  },
   { text: textBuildingNoneFiled  },
-  {
-    text: textGear,
-    highlight: "#settings-gear"
-  },
-  {
-    text: textSettings,
-    highlight: "#map-filter"
-  },
-  { text: textChangeToBlocks,
-    highlight: "#tab-block"},
-  { text: textChangeBackToBuildings,
-    highlight: "#tab-building"},
-  { text: textAddPattern, 
-    highlight: "#switch-pattern"},
-  { text: textDisplayAverage, 
-    highlight: "#switch-citywide"},
+  { text: textGear,    highlight: "#settings-gear"  },
+  { text: textSettings,    highlight: "#map-filter"  },
+  { text: textChangeToBlocks,    highlight: "#tab-block"},
+  { text: textChangeBackToBuildings,    highlight: "#tab-building"},
+  { text: textAddPattern,     highlight: "#switch-pattern"},
+  { text: textDisplayAverage,     highlight: "#switch-citywide"},
   { text: textChangeFeatures},
-  {
-    text: textTimeline,
-    map: mapZoomedNeighborhood,
-    highlight: "#year-timeline"
-  },
-  { text: textTimeline2},
-  {
-    text: textPropertyDetails,
-    map: mapZoomedNeighborhood
-  },
-  {
-    text: textDone,
-    map: mapDefault
-  },
+  { text: textTimeline,    map: mapZoomedNeighborhood,    highlight: "#year-timeline"  },  
+  { text: textTimeline2,    highlight: "#year-timeline"},  
+  { text: textPropertyDetails,    map: mapZoomedNeighborhood  },
+  {    text: textDone,    map: mapDefault  },
 ];
 
 export function startTour(map) {
@@ -1634,12 +1448,10 @@ export function showTourStep(map, stepIndex) {
       } 
     }
 
+  //Implement Steps of the Welcome Tour, these should work forwards and backwards
   if (step.text === textWelcome){
-   // switchTab(map, 'building');
     mapLegend.classList.add('hidden');
   }
-  // Settings (gear) step
-
   if (step.text === textGear) {
     filterContainer.classList.add('hidden');
     // Reset all legend items
@@ -1658,34 +1470,24 @@ export function showTourStep(map, stepIndex) {
       };
     }
   }
-
-  // Settings configured
   if (step.text === textSettings) {
     gearElement.onclick=null;
     switchTab(map, 'building');
     if (filterContainer.classList.contains('hidden')){
       toggleFilterContainer(filterContainer);
     }
-    settingsUpdated(map);
   }
-
   if (step.text === textChangeToBlocks) {
     switchTab(map, 'block');
-    settingsUpdated(map);
   }
  
   if (step.text === textChangeBackToBuildings) {
-    pattern.checked = false;
-   
+   pattern.checked = false;   
    switchTab(map, 'building');
-
-    settingsUpdated(map);
   }
- 
   if (step.text === textAddPattern) {
     pattern.checked = true;
     citywide.checked = false;
-    settingsUpdated(map);
     filterContainer.classList.remove('hidden');
     document.querySelectorAll(".citywide-pct").forEach(el =>el.classList.remove('tour-highlight'));
   }
@@ -1694,38 +1496,28 @@ export function showTourStep(map, stepIndex) {
     vacancy.checked = true;
     citywide.checked = true;
     pattern.checked = false;
-    settingsUpdated(map);
     document.querySelectorAll(".citywide-pct").forEach(el => el.classList.add('tour-highlight'));
     filterContainer.classList.remove('hidden');
   }
    if (step.text === textChangeFeatures) {
-
     document.querySelectorAll(".citywide-pct").forEach(el =>el.classList.remove('tour-highlight'));
     if (ownertenant || vacancy){
       ownertenant.checked = false;
       vacancy.checked = false;
     }
     pattern.checked = false;
-    settingsUpdated(map);
     filterContainer.classList.remove('hidden');
   }
     if (step.text === textZoomToBuildings) {
-    settingsUpdated(map);
-  
-    mapLegend.classList.add('hidden');
-      // resetAndHighlight(legendItems, '');
+      mapLegend.classList.add('hidden');
     }
   if (step.text === textLegend) {
-    settingsUpdated(map);
     mapLegend.classList.remove('hidden');
-      // filterContainer.classList.add('hidden');
   }
     if (step.text === textBuildingComplete) {
       resetAndHighlight(legendItems, 'complete-file');
     }
     if (step.text === textBuildingNoneFiled) {
-
-    // gearElement.removeEventListener('click', toggleFilterContainer);
       resetAndHighlight(legendItems, 'no-file');
     }
   if (step.text === textTimeline) {
@@ -1733,8 +1525,7 @@ export function showTourStep(map, stepIndex) {
     filterContainer.classList.add('hidden');
     vacancy.checked = true;
     ownertenant.checked = true;
-    settingsUpdated(map);
-
+  
    // Reset all legend items
     legendItems.forEach(item => {
       item.classList.remove('highlighted');
@@ -1753,11 +1544,14 @@ export function showTourStep(map, stepIndex) {
 
   if (step.text === textDone) {
     citywide.checked = false;
-    settingsUpdated(map);
     map.setPaintProperty('building-layer', 'fill-opacity', 1);
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
   }
+  if (![textBuildingComplete, textBuildingNoneFiled].includes(step.text)){
+    settingsUpdated(map);
+  }
+   
 }
 
 function makeExitTour(map) {
@@ -1840,7 +1634,6 @@ const enablePopupLinks = popup => {
     }
   }, 0);
 };
-
 
 export { addMapLegend, settingsUpdated, groupHasCSVData, groupParcelsByGeometry, 
         hideLoading, makeExitTour, setProgress, showLoading, 
