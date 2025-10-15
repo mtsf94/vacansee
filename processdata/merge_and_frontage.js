@@ -22,7 +22,7 @@ const outputPath2 = '../data/parcels_with_frontage.geojson';
 
 // Reduce ending file size by dropping some properties from feature.properties and/or each vacancy_by_year entry
 const PROPERTIES_TO_REMOVE = [
-  "from_address_num", "project_id_drop", "police_district", "supdistpad",
+  "project_id_drop", "police_district", "supdistpad",
   "date_map_alt", "odd_even", "zoning_code", "zoning_district", "analysis_neighborhood",
   "pw_recorded_map", "date_map_add", "data_loaded_at", "supdist", "planning_district",
   "project_id_alt", "date_map_drop", "supname", "planning_district_number",
