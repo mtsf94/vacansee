@@ -8,7 +8,7 @@ const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
 const animation_duration = 1300; // ms
 let cloudFrontURL = "https://cdn.vacansee.org";
-const parcelsUrl = cloudFrontURL + '/data/parcels_with_frontage101425.geojson';
+const parcelsUrl = cloudFrontURL + '/data/parcels_with_frontage.geojson';
 //defining the possible modes we might see on the map
 export const allModes = [
     'blockfiling',
@@ -117,6 +117,22 @@ setProgress(95);
         } 
         window.parcelsData=parcelsData;
         const year = currentYear;
+        // Assuming parcelsData is already defined
+        if (parcelsData && parcelsData.generated_at){
+          // Convert to Date object
+          const date = new Date(parcelsData.generated_at);
+
+          // Format the date as "Mon DD YYYY" (e.g., "Oct 14 2025")
+          const formattedDate = date.toLocaleDateString('en-US', {
+              month: 'long',
+              day: '2-digit',  // "14"
+              year: 'numeric'  // "2025"
+          });
+          
+          // Update the span's content
+          document.getElementById('data-lastupdated').textContent = formattedDate;
+          
+        }
         let allFeatures = groupParcelsByGeometry(parcelsData.features)
           .filter(group => {
           return groupHasCSVData(group, year)}

@@ -1,20 +1,41 @@
 /*
 merge_and_frontage.js
 This program merges GeoJSON parcels with tax data, and estimates street frontage using parcel boundaries
-
-Accepts GeoJSON and CSV data as input parameters,
-instead of reading files internally.
-
 */
-
+const fs = require('fs');
+const csv = require('csv-parser');
 const haversine = require('haversine-distance');
+const { chain } = require('stream-chain');
+const { parser } = require('stream-json');
+const { pick } = require('stream-json/filters/Pick');
+const { streamArray } = require('stream-json/streamers/StreamArray');
+
 
 //path to the relevant data files
-//source:  [https://data.sfgov.org/Geographic-Locations-and-Boundaries/Parcels-Active-and-Retired/acdm-wktn](https://data.sfgov.org/Geographic-Locations-and-Boundaries/Parcels-Active-and-Retired/acdm-wktn)
+//source:  https://data.sfgov.org/Geographic-Locations-and-Boundaries/Parcels-Active-and-Retired/acdm-wktn
 const geojsonPath = '../archive/archive_data/Parcels Active and Retired_20250612.geojson';
+const now = new Date().toISOString();
 
-//source: [https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data](https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data)
-const csvPath = '../data/Taxable_Commercial_Spaces_20251014.csv';
+  
+//source: https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data
+const csvPath = '../data/Taxable_Commercial_Spaces_20251020.csv';
+
+// Extract the date string using RegExp
+const match = csvPath.match(/(\d{8})\.csv$/);
+let extractedDate ;
+if (match) {
+    const dateStr = match[1]; // "20251020"
+    
+    // Parse the date parts
+    const year = parseInt(dateStr.slice(0, 4), 10);
+    const month = parseInt(dateStr.slice(4, 6), 10) - 1; // JS months are 0-based
+    const day = parseInt(dateStr.slice(6, 8), 10);
+    
+    extractedDate = new Date(year, month, day);
+    console.log('Extracted Date:', extractedDate);
+} else {
+    console.error('Date not found in filename.');
+}
 // const csvPath = '../data/Taxable_Commercial_Spaces_20251007.csv';
 const outputPath2 = '../data/parcels_with_frontage.geojson';
 
@@ -32,6 +53,23 @@ const PROPERTIES_TO_REMOVE = [
 // Utility: pad block/lot with leading zeros if needed
 function padBlock(block) { return block.padStart(4, '0'); }
 function padLot(lot) { return lot.padStart(3, '0'); }
+
+// Utility: read CSV
+function readCSV(filePath) {
+  return new Promise((resolve, reject) => {
+    const results = [];
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', data => results.push(data))
+      .on('end', () => resolve(results))
+      .on('error', reject);
+  });
+}
+
+// Utility: read GeoJSON
+function readGeoJSON(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
 
 // Utility: get block/lot key from feature
 function getBlockLotKey(feature) {
@@ -144,26 +182,15 @@ const edgeCounts = new Map();
 const seenMapBlkLot = new Set();
 const featureMap = new Map();
 
-// Helper: get block key (first 4 chars of mapblklot)
-function getBlockKey(feature) {
-  return feature.properties.blklot.slice(0, 4);
-}
-
-/**
- * Main merge function now accepts GeoJSON and CSV data as inputs to enable flexible data sources
- * @param {Object} geojson GeoJSON FeatureCollection object (parsed)
- * @param {Array<Object>} csvRows Array of CSV row objects (parsed)
- * @param {string|null} outputPath Optional file path to write output; if null returns assembled object
- * @returns {Object|undefined} Merged GeoJSON object or undefined if outputPath supplied
- */
-async function mergeGeoJSONWithCSV(geojson, csvRows, outputPath = null) {
-  const now = new Date().toISOString();
+async function mergeGeoJSONWithCSV() {
+  const geojson = readGeoJSON(geojsonPath);
+  const csvRows = await readCSV(csvPath);
 
   // Build CSV lookup: key = block-lot, value = { [year]: [rows] }
   const csvLookup = {};
   for (const row of csvRows) {
     const block = padBlock(String(row.block || '').trim());
-    // adding uppercase conversion here to handle inconsistent uppercase vs lowercase across years
+    //adding uppercase conversion here to handle inconsistent uppercase vs lowercase across years
     const lot = padLot(String(row.lot || '').trim().toUpperCase());
     const key = `${block}-${lot}`;
     const year = String(row.taxyear).trim();
@@ -203,6 +230,11 @@ async function mergeGeoJSONWithCSV(geojson, csvRows, outputPath = null) {
     }
     return feature;
   });
+
+// Helper: get block key (first 4 chars of mapblklot)
+function getBlockKey(feature) {
+  return feature.properties.blklot.slice(0, 4);
+}
 
   // Group features by block
   const blockGroups = mergedFeatures.reduce((acc, f) => {
@@ -255,28 +287,37 @@ async function mergeGeoJSONWithCSV(geojson, csvRows, outputPath = null) {
     });
   }
 
-  // First pass: count unique edges and collect mapblklot->feature for frontage calculation
+  // Add blk_filed and blk_total to each feature's vacancy_by_year
   mergedFeatures.forEach(feature => {
-    const { edges, indexMap } = getEdgesWithIndices(feature);
-    edges.forEach(edge => {
-      // Use sorted edge for undirected uniqueness
-      const key = [edge[0].join(','), edge[1].join(',')].sort().join('|');
-      edgeCounts.set(key, (edgeCounts.get(key) || 0) + 1);
+      const { edges, indexMap } = getEdgesWithIndices(feature);
+      edges.forEach(edge => {
+        // Use sorted edge for undirected uniqueness
+        const key = [edge[0].join(','), edge[1].join(',')].sort().join('|');
+        edgeCounts.set(key, (edgeCounts.get(key) || 0) + 1);
+      });
+
+    const blk = getBlockKey(feature);
+    const stats = blockStats[blk];
+    if (!stats) return;
+    const byYear = feature.properties.vacancy_by_year || {};
+    Object.keys(byYear).forEach(year => {
+      byYear[year].blk_filed = String(stats.blk_filed_by_year[year] || 0);
+      byYear[year].blk_complete= String(stats.blk_complete_by_year[year] || 0);
+      byYear[year].blk_total = String(stats.blk_total);
     });
   });
+const mergedFeatures2 = mergedFeatures.map(feature => {
+  //converting to upper case to handle properties with inconsistent case
+  const mapblklot =  (feature.properties.mapblklot) ?  feature.properties.mapblklot.toUpperCase() : feature.properties.mapblklot; 
+  if (!featureMap.has(mapblklot)) featureMap.set(mapblklot, feature);
 
-  const mergedFeatures2 = mergedFeatures.map(feature => {
-    //converting to upper case to handle properties with inconsistent case
-    const mapblklot =  (feature.properties.mapblklot) ?  feature.properties.mapblklot.toUpperCase() : feature.properties.mapblklot; 
-    if (!featureMap.has(mapblklot)) featureMap.set(mapblklot, feature);
+  //only map each lot/block once
+  if (seenMapBlkLot.has(mapblklot)) return feature;
+  seenMapBlkLot.add(mapblklot);
 
-    //only map each lot/block once
-    if (seenMapBlkLot.has(mapblklot)) return feature;
-    seenMapBlkLot.add(mapblklot);
-
-    const { edges, indexMap } = getEdgesWithIndices(feature);
-     
-    let frontage = 0;
+  const { edges, indexMap } = getEdgesWithIndices(feature);
+   
+  let frontage = 0;
     const frontageEdgeIndices = [];
     edges.forEach((edge, i) => {
       // Use sorted edge for undirected uniqueness
@@ -304,47 +345,36 @@ async function mergeGeoJSONWithCSV(geojson, csvRows, outputPath = null) {
     // Remove any old frontageEdges property if present
     delete feature.properties.frontageEdges;
     return feature;
-  });
+});
 
-  const mergedFeatures3 = mergedFeatures2.filter(feature =>{
-    // Only keep features with non-empty vacancy_by_year
-      const vby = feature && feature.properties && feature.properties.vacancy_by_year;
-      return (
-        vby &&
-        typeof vby === 'object' &&
-        !Array.isArray(vby) &&
-        Object.keys(vby).length > 0
-      ) 
-  });
 
-  const now = new Date().toISOString();
+const mergedFeatures3 = mergedFeatures2.filter(feature =>{
+  // Only keep features with non-empty vacancy_by_year
+    const vby = feature && feature.properties && feature.properties.vacancy_by_year;
+    return (
+      vby &&
+      typeof vby === 'object' &&
+      !Array.isArray(vby) &&
+      Object.keys(vby).length > 0
+    ) 
+});
 
-  const mergedGeoJSON = {
-    type: "FeatureCollection",
-    generated_at: now,
-    features: mergedFeatures3
-  };
+const outputStream2 = fs.createWriteStream(outputPath2);
+  outputStream2.write(`{\n  "type": "FeatureCollection",\n `);
+  outputStream2.write(`"generated_at": "${extractedDate}", \n`);
+  outputStream2.write('"features": [\n');
+  mergedFeatures3.forEach((feature, index) => {
+    // Write the feature without pretty spacing
+    outputStream2.write(JSON.stringify(feature));
 
-  // Convert to JSON string
-  const geojsonContent = JSON.stringify(mergedGeoJSON);
-
-  // R2 path (customize as needed)
-  const geofile = `data/latestdata.geojson`;
-
-  // Save to R2
-  await env.BUCKET.put(geofile, geojsonContent, {
-    httpMetadata: {
-      contentType: 'application/geo+json'
+    // if not last feature, add comma
+    if (index < mergedFeatures3.length - 1) {
+      outputStream2.write(',');
     }
   });
-
-  console.log(`Merged GeoJSON written to R2 at ${geofile}`);
-
-  // Optionally return the object if needed
-  return mergedGeoJSON;
-
-
-
+  outputStream2.write('  ]\n}\n');
+  outputStream2.end();
+  console.log(`Merged GeoJSON written to ${outputPath2}`);
 }
 
-module.exports = { mergeGeoJSONWithCSV };
+mergeGeoJSONWithCSV().catch(console.error);
