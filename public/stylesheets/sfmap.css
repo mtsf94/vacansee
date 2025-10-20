@@ -149,8 +149,9 @@ footer {
    text-align:center;
 }
 .legend-label {
-  vertical-align : 'middle';
+  max-width: 300px;
   display: inline-block;
+  vertical-align : 'middle';
 }
 
 .navbar-toggle:disabled {
@@ -162,7 +163,6 @@ footer {
   position:absolute; 
   top:33%;
   width: 350px;
-/*  height: 80px; */
   left:50%; 
   transform:translateX(-50%); 
 
@@ -555,6 +555,10 @@ footer {
   width: 305px;
   top: 350px;
   left: 50px;
+  min-width: 220px;
+  max-width: 320px;
+  width: auto;
+  display: block;
 }
 
 .embed-legend{
@@ -591,17 +595,17 @@ footer {
   flex-basis: 300px;
 }
 .legend-items {
-  margin-bottom: 1em;
-  display: block;
-  margin-right: 2px;
-  padding: 5px 0px;
+  padding-bottom: 0.5em;
+  padding-right: .25em;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  grid-auto-rows: auto;
+  row-gap: 4px;
+  margin-top: .5em;
 }
 
 .legend-item {
-  margin-bottom: .3em;
-  display: flex;
-  transition: background 0.3s, opacity 0.3s;
-  align-items: center;
+  display: contents;
 }
 
 .legend-item.dimmed {
@@ -616,9 +620,11 @@ footer {
 
 .legend-swatch {
   height: 20px;
-  flex: 0 0 20px;
-  margin: 0px 8px;
-  border-radius: 3px;
+  width: 20px;
+  margin: auto;
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: start;
 }
 .legendMinMax {
   font-size: 1.2em;
@@ -963,7 +969,6 @@ footer {
 
   .legend-container {
     top: 63%;
-    min-width: 220px;
   }
 
   .legend-container-tour {

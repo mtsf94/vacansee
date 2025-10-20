@@ -1355,8 +1355,8 @@ export const tourSteps = [
   { text: textSettings,    highlight: "#map-filter"  },
   { text: textChangeToBlocks,    highlight: "#tab-block"},
   { text: textChangeBackToBuildings,    highlight: "#tab-building"},
-  { text: textAddPattern,     highlight: "#switch-pattern"},
-  { text: textDisplayAverage,     highlight: "#switch-citywide"},
+  { text: textAddPattern},
+  { text: textDisplayAverage},
   { text: textChangeFeatures},
   { text: textTimeline,    map: mapZoomedNeighborhood,    highlight: "#year-timeline"  },  
   { text: textTimeline2,    highlight: "#year-timeline"},  
@@ -1496,11 +1496,13 @@ export function showTourStep(map, stepIndex) {
     vacancy.checked = true;
     citywide.checked = true;
     pattern.checked = false;
-    document.querySelectorAll(".citywide-pct").forEach(el => el.classList.add('tour-highlight'));
+    settingsUpdated(map);
+    document.querySelectorAll(".citywide-pct").forEach(el => {el.classList.add('tour-highlight');});
     filterContainer.classList.remove('hidden');
   }
    if (step.text === textChangeFeatures) {
     document.querySelectorAll(".citywide-pct").forEach(el =>el.classList.remove('tour-highlight'));
+    console.log("RAUL");
     if (ownertenant || vacancy){
       ownertenant.checked = false;
       vacancy.checked = false;
@@ -1521,6 +1523,7 @@ export function showTourStep(map, stepIndex) {
       resetAndHighlight(legendItems, 'no-file');
     }
   if (step.text === textTimeline) {
+
     selectYear(map, 0);
     filterContainer.classList.add('hidden');
     vacancy.checked = true;
@@ -1548,7 +1551,7 @@ export function showTourStep(map, stepIndex) {
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
   }
-  if (![textBuildingComplete, textBuildingNoneFiled].includes(step.text)){
+  if (![textBuildingComplete, textBuildingNoneFiled, textDisplayAverage].includes(step.text)){
     settingsUpdated(map);
   }
    
