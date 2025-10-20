@@ -521,7 +521,7 @@ footer {
 .map-filter {
   background: var(--legend_color_1);
   position: absolute;
-  right: 10px;
+  left: 50px;
   z-index: 31;
   top:11%;
   width: 300px;
