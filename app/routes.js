@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const UAParser = require('ua-parser-js');
 const nodemailer = require('nodemailer');
+const validator = require('validator');
 const nbhdConfig = require('../config/nbhd.json');
 const {getAggregatedVisits, cleanOldLogs} = require('../utils/visitors');
 require('dotenv').config();
@@ -149,7 +150,8 @@ const logvisit = async function(req, page= null){
       const browserName = parser.getBrowser().name || 'Other';
       const osName = parser.getOS().name || 'Other';
 
-      const nbhdKey = req.query.nbhd || "all";
+      const nbhdKey = validator.escape(req.query.nbhd || "all");
+      const reqRef = validator.escape(req.query.ref || '');
       const nbhd = nbhdKey && nbhdConfig[nbhdKey] ? nbhdConfig[nbhdKey] : {'name': 'all'};
       const currentLang = getCurrentLang(req);
       const visit = {
@@ -158,6 +160,7 @@ const logvisit = async function(req, page= null){
         os: osName,
         lang: currentLang,
         nbhd: page || nbhd.name,
+        ref: reqRef,
         time: new Date().toISOString()
       };
       // Log visit to Supabase table `visits`
