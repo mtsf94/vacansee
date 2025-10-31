@@ -28,6 +28,7 @@ const fillSpecification = {
   'owner-only-vacant': map_fill_vac,
 };
 
+
 const filterOptions = {    
   block: [
     { id: 'blockfiling', label: t('Show Block Filing Status') },
