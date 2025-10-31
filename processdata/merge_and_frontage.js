@@ -18,7 +18,7 @@ const now = new Date().toISOString();
 
   
 //source: https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data
-const csvPath = '../data/Taxable_Commercial_Spaces_20251020.csv';
+const csvPath = '../data/Taxable_Commercial_Spaces_20251031.csv';
 
 // Extract the date string using RegExp
 const match = csvPath.match(/(\d{8})\.csv$/);
