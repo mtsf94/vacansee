@@ -27,10 +27,13 @@ let allFeatures = [];
 let currentYear = localStorage.getItem('preferredYear') || "2022";
 let persistentPopups = [];
 window.currentTourStep = 0;
+window.offerTour = 1 ; 
 let currentLang = 'en';
 let animateInterval = null;
 window.currentMode = 'filing-ownertenant-vacancy';
 
+    console.log("PRINT IT ALL");
+    console.log(localStorage);
 
 export const savedYear = localStorage.getItem('preferredYear') || "2022";  
 export const map_fill_vac =            {'color': '#d64200', 'pattern': 'tmpoly-plus-100-black',                      'svg': 'tm-plus-100'};
@@ -79,13 +82,13 @@ setProgress(95);
       idleCount++;
       if (idleCount == 2) {
         hideLoading();
-        if (tourModal) {
-          if (localStorage.getItem('hideTourPrompt') === '1') {
-            tourModal.classList.add("hidden");
-          } else {
-            tourModal.classList.remove("hidden");
-          }
-        }
+        // if (tourModal) {
+        //   if (localStorage.getItem('hideTourPrompt') === '1') {
+        //     tourModal.classList.add("hidden");
+        //   } else {
+        //     tourModal.classList.remove("hidden");
+        //   }
+        // }
       }
       if (idleCount === 3) {
         map.off('idle', handleIdle);

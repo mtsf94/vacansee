@@ -900,6 +900,11 @@ const mapLegend = document.getElementById('map-legend');
 const filterContainer = document.getElementById('map-filter');
 function toggleFilterContainer() {
   filterContainer.classList.toggle('hidden');
+  if (window.offerTour == 1 &&  localStorage.getItem('hideTourPrompt') != '1') {
+      window.offerTour = 0 ; 
+      document.getElementById('tour-skip-remember').checked = false;
+      document.getElementById('tour-modal').classList.remove("hidden");
+  }
 }
 let gearElement = null;
 function addMapLegend(map, currentYear) {
@@ -1327,7 +1332,11 @@ export function selectYear(map, idx) {
   document.querySelectorAll('.year-tick').forEach(t => t.classList.remove('selected'));
   document.querySelector(`.year-tick[data-year="${years[idx]}"]`).classList.add('selected');
   window.currentYear = years[idx];
-
+  if (window.offerTour == 1 &&  localStorage.getItem('hideTourPrompt') != '1') {
+      window.offerTour = 0 ; 
+      document.getElementById('tour-skip-remember').checked = false;
+      document.getElementById('tour-modal').classList.remove("hidden");
+  }
   localStorage.setItem('preferredYear', years[idx]);
 
   let  allFeatures = updateMapForYear(map, window.currentData, years[idx],mapLevel);
@@ -1450,6 +1459,7 @@ export function showTourStep(map, stepIndex) {
 
   //Implement Steps of the Welcome Tour, these should work forwards and backwards
   if (step.text === textWelcome){
+    filterContainer.classList.add('hidden');
     mapLegend.classList.add('hidden');
   }
   if (step.text === textGear) {
@@ -1475,6 +1485,7 @@ export function showTourStep(map, stepIndex) {
     switchTab(map, 'building');
     if (filterContainer.classList.contains('hidden')){
       toggleFilterContainer(filterContainer);
+    
     }
   }
   if (step.text === textChangeToBlocks) {
