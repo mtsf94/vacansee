@@ -19,6 +19,8 @@ const fillSpecification = {
   'block-complete': map_fill_partcomplete2,
   'file': map_fill_partcomplete1,
   'no-file': map_fill_nofile,
+  'occupied': map_fill_partcomplete1,
+  'vacant': map_fill_vac,
   'tenant-only': map_fill_partcomplete1,
   'owner-only': map_fill_partcomplete2,
   'complete-file': map_fill_complete,

@@ -90,7 +90,8 @@ setProgress(95);
         //   }
         // }
       }
-      if (idleCount === 3) {
+   
+      if (idleCount === 10) {
         map.off('idle', handleIdle);
       }
     }
