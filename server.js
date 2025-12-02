@@ -1,4 +1,8 @@
 //server.js
+
+//to update PMTiles: ./pmtiles extract  https://build.protomaps.com/20251110.pmtiles SFbaymap.pmtiles --bbox=-122.800521,37.600501,-122.027022,37.880589
+
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');

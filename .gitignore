@@ -8,4 +8,6 @@ data/*.zip
 data/*.pmtiles
 data/deployed
 data/pending
+public/cdn
+public/*.zip
 PMTiles

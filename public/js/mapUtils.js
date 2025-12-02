@@ -901,12 +901,14 @@ const checkboxesDiv = el({ tag: 'div', class: 'legend-checkboxes', id: 'legend-c
 const mapLegend = document.getElementById('map-legend');
   
 const filterContainer = document.getElementById('map-filter');
-function toggleFilterContainer() {
+function toggleFilterContainer(showOffer=true) {
   filterContainer.classList.toggle('hidden');
   if (window.offerTour == 1 &&  localStorage.getItem('hideTourPrompt') != '1') {
       window.offerTour = 0 ; 
       document.getElementById('tour-skip-remember').checked = false;
-      document.getElementById('tour-modal').classList.remove("hidden");
+      if (showOffer!=false){
+        document.getElementById('tour-modal').classList.remove("hidden");
+      }
   }
 }
 let gearElement = null;
@@ -1472,7 +1474,6 @@ export function showTourStep(map, stepIndex) {
       item.classList.remove('dimmed');
       item.classList.remove('highlighted');
     });
-
     map.setPaintProperty('building-layer', 'fill-opacity', 1);
     map.setPaintProperty('pattern-layer', 'fill-opacity', 1);
     map.setFilter('polygon-highlight', ['==', 'groupStatus', '']);
@@ -1482,12 +1483,14 @@ export function showTourStep(map, stepIndex) {
         showTourStep(map, window.currentTourStep);
       };
     }
+
   }
   if (step.text === textSettings) {
     gearElement.onclick=null;
     switchTab(map, 'building');
+
     if (filterContainer.classList.contains('hidden')){
-      toggleFilterContainer(filterContainer);
+      toggleFilterContainer(false);
     
     }
   }
@@ -1516,7 +1519,6 @@ export function showTourStep(map, stepIndex) {
   }
    if (step.text === textChangeFeatures) {
     document.querySelectorAll(".citywide-pct").forEach(el =>el.classList.remove('tour-highlight'));
-    console.log("RAUL");
     if (ownertenant || vacancy){
       ownertenant.checked = false;
       vacancy.checked = false;

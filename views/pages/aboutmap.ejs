@@ -110,19 +110,18 @@ window.addEventListener('load', () => {
 
         <%- include('../partials/nav') %>
          <div id="tour-modal"  class="hidden" >
-                    <div id='tour-div'>
-                        <h2><%= t("Take a Tour?")%></h2>
-                        <p><%= t("Welcome! Would you like to take a tour of the map?") %></p>
-                        <button id="tour-start-btn" class="navbar-toggle tour-btn"><%= t("Yes") %></button>
-                        <button id="tour-skip-btn" class="navbar-toggle  tour-btn"><%= t("Skip") %></button><br>
-                        <label class="remember-switch">
-                        <span class="label-text"><%= t("Don't ask me again") %></span>
-                        <input type="checkbox" id="tour-skip-remember" class="switch-input">
-                        <span id="tour-skip-slider" class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-        <!-- <div id="mytest">he/llo</div> -->
+            <div id='tour-div'>
+                <h2><%= t("Take a Tour?")%></h2>
+                <p><%= t("Welcome! Would you like to take a tour of the map?") %></p>
+                <button id="tour-start-btn" class="navbar-toggle tour-btn"><%= t("Yes") %></button>
+                <button id="tour-skip-btn" class="navbar-toggle  tour-btn"><%= t("Skip") %></button><br>
+                <label class="remember-switch">
+                <span class="label-text"><%= t("Don't ask me again") %></span>
+                <input type="checkbox" id="tour-skip-remember" class="switch-input">
+                <span id="tour-skip-slider" class="slider round"></span>
+                </label>
+            </div>
+        </div>
         <div id="map-and-about" >
             <!-- MAP FRAME -->
             <div id="aboutmap-frame" class="hidden">

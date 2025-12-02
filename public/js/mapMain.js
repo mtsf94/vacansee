@@ -32,9 +32,6 @@ let currentLang = 'en';
 let animateInterval = null;
 window.currentMode = 'filing-ownertenant-vacancy';
 
-    console.log("PRINT IT ALL");
-    console.log(localStorage);
-
 export const savedYear = localStorage.getItem('preferredYear') || "2022";  
 export const map_fill_vac =            {'color': '#d64200', 'pattern': 'tmpoly-plus-100-black',                      'svg': 'tm-plus-100'};
 export const map_fill_nofile =         {'color': '#767676', 'pattern': 'tmpoly-circle-light-100-black',              'svg': 'tm-circle-light-100' };
@@ -390,7 +387,7 @@ setProgress(95);
       if (isMobile()) {
         flyTourDivToHamburger();
       } else {
-        document.getElementById('tour-modal').classList.add('hidden'); 
+       tourModal.classList.add('hidden'); 
     }};
 
     document.getElementById('tour-next-btn').onclick = () => {
@@ -475,15 +472,20 @@ setProgress(95);
       if (hamburgerMenu && hamburgerMenu.getAttribute('aria-expanded') === 'true') {
         hamburgerMenu.classList.add("hidden");
       }
-      document.getElementById('tour-modal').classList.add("hidden");
+      tourModal.classList.add("hidden");
       startTour(map);
 
     });
     if (nav){
     document.getElementById('tour-start-btn-nav').addEventListener('click', () => {
-      document.getElementById('tour-skip-remember').checked = false;
-      localStorage.setItem('hideTourPrompt', '0');
-      tourModal.classList.remove("hidden");
+      localStorage.setItem('hideTourPrompt', document.getElementById('tour-skip-remember').checked ? '1' : '0');
+      // Hide the hamburger menu if open (optional)
+      const hamburgerMenu = document.getElementById('navbar-hamburger');
+      if (hamburgerMenu && hamburgerMenu.getAttribute('aria-expanded') === 'true') {
+        hamburgerMenu.classList.add("hidden");
+      }
+      tourModal.classList.add("hidden");
+      startTour(map);
     });  
     }
   }
