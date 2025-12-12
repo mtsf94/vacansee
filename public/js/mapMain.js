@@ -1,7 +1,7 @@
 import {bounds, startAnimation, startTour, stopAnimation, selectYear, stopParcelPopcorns, 
 startParcelPopcorns, tourSteps, showTourStep, showPopup, handleMapTap, flyTourDivToHamburger, 
 isMobile, addMapLegend, settingsUpdated, groupHasCSVData, groupParcelsByGeometry, 
-hideLoading, setProgress, makeExitTour, showLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
+hideMapLoading,  setMapProgress, makeExitTour, showMapLoading, makeDraggable, fetchWithProgress} from './mapUtils.js';
 // ===== Constants =====
 const protocol = new pmtiles.Protocol();
 
@@ -67,7 +67,7 @@ fetch('js/vacanseestyle.json')
       minZoom: 10.5,
       maxBounds: bounds
     });
-setProgress(95);
+    setMapProgress(40);
  
     const tourModal = document.getElementById('tour-modal');
 
@@ -77,17 +77,11 @@ setProgress(95);
 
     function handleIdle() {
       idleCount++;
-      if (idleCount == 2) {
-        hideLoading();
-        // if (tourModal) {
-        //   if (localStorage.getItem('hideTourPrompt') === '1') {
-        //     tourModal.classList.add("hidden");
-        //   } else {
-        //     tourModal.classList.remove("hidden");
-        //   }
-        // }
+      
+      if (idleCount === 2){
+           hideMapLoading();
+     
       }
-   
       if (idleCount === 10) {
         map.off('idle', handleIdle);
       }
@@ -107,14 +101,12 @@ setProgress(95);
       }
     });
     fetchWithProgress(parcelsUrl, pct => {
-        setProgress(pct * 0.8); 
+        setMapProgress(pct * 0.8); 
     })
     .then(parcelsData => {
-        setProgress(80); // parsing done
-     
+        setMapProgress(80); // parsing done   
         if (tourModal){
-          document.getElementById('spinner-overlay').classList.add("hidden");
-          document.getElementById('loading-overlay').classList.remove("hidden");
+          document.getElementById('map-loading-overlay').classList.remove("hidden");
         } 
         window.parcelsData=parcelsData;
         const year = currentYear;
@@ -224,14 +216,10 @@ setProgress(95);
       })
       .catch(err => {
         alert('Could not load data: ' + err.message);
-        hideLoading();
+        hideMapLoading();
       });     
   startParcelPopcorns(map);
   });
-
-  // ===== Load Data & Select Year =====
-  showLoading(`${t("Loading map...")}`);
-
 
   makeDraggable(document.getElementById('legend-container'));
   makeDraggable(document.getElementById('legend-minimize-container'));

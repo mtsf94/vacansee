@@ -223,23 +223,47 @@ async function fetchWithProgress(url, onProgress) {
   // Parse JSON separately (can also track parsing progress in large cases)
   return JSON.parse(text);
 }
-const showLoading = msg => {
-  const overlay = document.getElementById('loading-overlay');
+// const showLoading = msg => {
+//   const overlay = document.getElementById('loading-overlay');
+//   if (overlay){
+//     document.getElementById('loading-message-finite').textContent = msg;
+//     setProgress(0);    
+//   }
+// };
+// const hideLoading = () => {
+//   if (document.getElementById('loading-overlay')){
+//   document.getElementById('loading-overlay').classList.add("hidden");
+// }
+// }
+// const setProgress = pct =>{
+//   if (document.getElementById('loading-progress-bar')){
+//     document.getElementById('loading-progress-bar').style.width = `${pct}%`;
+//   }
+// }
+// Map-specific loading functions
+const showMapLoading = msg => {
+  const overlay = document.getElementById('map-loading-overlay');
   if (overlay){
-    document.getElementById('loading-message-finite').textContent = msg;
-    setProgress(0);    
+    const loadingMessage = overlay.querySelector('#loading-message-finite');
+    if (loadingMessage) {
+      loadingMessage.textContent = msg;
+    }
+    setMapProgress(0);    
   }
 };
-const hideLoading = () => {
-  if (document.getElementById('loading-overlay')){
-  document.getElementById('loading-overlay').classList.add("hidden");
-}
-}
-const setProgress = pct =>{
-  if (document.getElementById('loading-progress-bar')){
-    document.getElementById('loading-progress-bar').style.width = `${pct}%`;
+
+const hideMapLoading = () => {
+  if (document.getElementById('map-loading-overlay')){
+    document.getElementById('map-loading-overlay').classList.add("hidden");
   }
-}
+  document.getElementById('map-container').classList.remove('map-container-opaque');
+};
+
+const setMapProgress = pct => {
+  if (document.getElementById('map-loading-progress-bar')){
+    document.getElementById('map-loading-progress-bar').style.width = `${pct}%`;
+  }
+};
 
 // ===== Map Functions =====
 
@@ -998,8 +1022,8 @@ function saveCurrentTabState(mapLevel) {
 const prefYear = localStorage.getItem('preferredYear') || "2022";
 
 function updateLegend(map, citywide, mapLevel='building', showCitywide=false, showPattern=false) {
-  if (!citywide) return;
-
+ if (!citywide) return;
+ 
   const legendTitleText = document.getElementById('legend-title-text');
   if (!mapLegend) return;
   legendTitleText.innerHTML = t(`Legend`)+(window.showCitywide ? t(` (city %)`):``);
@@ -1043,6 +1067,7 @@ const citywideLabels = {
     ]
   };
   let useMode = window.currentMode;
+
   let usePattern = window.showPattern;
   let useCitywide = window.showCitywide;
   // Use currentMode and currentYear from youcitywideLabelsr global/app context
@@ -1653,8 +1678,7 @@ const enablePopupLinks = popup => {
     }
   }, 0);
 };
-
 export { addMapLegend, settingsUpdated, groupHasCSVData, groupParcelsByGeometry, 
-        hideLoading, makeExitTour, setProgress, showLoading, 
-        makeDraggable, fetchWithProgress, isMobile, flyTourDivToHamburger, 
+         hideMapLoading, makeExitTour, setMapProgress,  
+        showMapLoading, makeDraggable, fetchWithProgress, isMobile, flyTourDivToHamburger, 
         showPopup, handleMapTap};

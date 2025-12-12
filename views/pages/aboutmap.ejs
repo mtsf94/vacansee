@@ -6,26 +6,28 @@
 
  <link href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css" rel="stylesheet" />
      <style>
-.loading-overlay {
-  display: block;
-  position: fixed;
+.map-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
   top: 0;
   left: 0;
   width: 100vw;
+  height: 530px;
   background: var(--header_color_1);
-  color:white;
-  height: 100dvh;
   z-index: 600;
   text-align: center;
-  padding-top: 20vh;
   font-size: 2em;
   font-weight: 600;
+  color: var(--header_color_2);
+  justify-content: center;
 }
-
 .progress-container {
     position: absolute;
   width: 50%;
-  top: 30vh;
+  top: 60%;
   height: 30px;
   left: 50%;
   transform: translateX(-50%);
@@ -39,6 +41,7 @@
     position: absolute;
     top: 0;
     height: 100%;
+    background-color:var(--header_color_1);
     border-radius: 15px;
  }
 
@@ -89,22 +92,7 @@ window.addEventListener('load', () => {
   }
 });
 </script>
-<div id="spinner-overlay" class="loading-overlay">
-  <div id="loading-message-continuous">Loading site...</div><br>
-    <div class="progress-container finite">
-        <div class="loading-progress-bar continuous"></div>
-    </div>
-</div>
 
-
-<div  id="loading-overlay" class="loading-overlay hidden">
-    <span id="loading-message-finite">
-        <%= t("Loading map...") %> 
-    </span>
-    <div class="progress-container finite">
-        <div id="loading-progress-bar" class="loading-progress-bar finite"></div>
-    </div>
-</div>
 
     <div id="fullpagediv hidden">
 
@@ -123,8 +111,10 @@ window.addEventListener('load', () => {
             </div>
         </div>
         <div id="map-and-about" >
+          
+
             <!-- MAP FRAME -->
-            <div id="aboutmap-frame" class="hidden">
+            <div id="aboutmap-frame" >
                 <!-- Fullscreen button (diagonal arrows in) -->
                 <button class = "fullscreen-btn" id="aboutmap-fullscreen-btn" title="Full Screen">
                 <span>&#x2922;</span>
@@ -135,8 +125,16 @@ window.addEventListener('load', () => {
                 </button>
 
                 <div id="parcel-popcorn-container" ></div>
+  <div id="map-loading-overlay" class="map-loading-overlay">
+                <div class="loading-message" id="map-loading-message">
+                    <%= t("Loading map data...") %> 
+                </div>
+                <div class="progress-container">
+                    <div id="map-loading-progress-bar" class="loading-progress-bar"></div>
+                </div>
+            </div>
+                <div id="map-container" class="map-container-opaque ">
 
-                <div id="map-container">
                     <div id="year-timeline" class="year-timeline">
                         <span class="year-tick" data-year="2022">2022</span>
                         <span class="year-tick" data-year="2023">2023</span>

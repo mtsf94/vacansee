@@ -73,7 +73,18 @@ html, body {
 #map-container {
   position: relative;
   height: 100%;
+  transition: opacity 0.3s ease;
 }
+
+#map-container-opaque {
+
+  opacity: 0;
+}
+
+#map-container.loaded {
+  opacity: 1;
+}
+
 
 .map-overlay {
   padding: 0px 10px;
@@ -360,47 +371,17 @@ footer {
 }
 
 /* ===== Loading Overlay ===== */
-.loading-overlay {
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  color:white;
-  height: 100dvh;
-  background: #d64200;
-  z-index: 600;
-  text-align: center;
-  padding-top: 20vh;
-  font-size: 2em;
-  font-weight: 600;
-}
-
-
-
-.progress-container {
-    position: absolute;
-  width: 50%;
-  top: 30vh;
-  height: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background:  #eee;
-  border-radius: 15px;
-  border: 3px solid white;
-  box-shadow: 0 1px 4px #aaa;
-}
-
-
 .main-color{
   color: var(--header_color_1);
 }
+
+/*
 #loading-progress-bar {
   height: 100%;
   width: 0%;
   background: #d64200;
   border-radius: 15px;
-}
+}*/
 
 /* ===== MapLibre Popup Styling ===== */
 .maplibregl-popup {
@@ -730,6 +711,7 @@ footer {
 }
 
  #aboutmap-frame {
+  top: 0px;
     width: 100%;
     overflow: hidden;
     position: relative;
