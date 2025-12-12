@@ -1601,6 +1601,7 @@ export function showTourStep(map, stepIndex) {
 function makeExitTour(map) {
   return function(){
 
+      window.currentTourStep  = 0 ;
       const legendItemsContainer = document.getElementById('legend-items');
       const legendItems = legendItemsContainer.querySelectorAll('.legend-item');
      legendItems.forEach(item => {
