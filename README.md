@@ -52,7 +52,7 @@ Just copy and paste this code:
 ## Changelog
 
 ### 2026-06-02
-- Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20260602.geojson), which includes 5,104 parcels at this time. The file will presumably be updated as 2025 information is currently missing for many parcels. 
+- Downloaded and processed latest vacancy tax data file (Parcels Active and Retired_20260602.geojson), which includes 5,431 parcels at this time. The file will presumably be updated as 2025 information is currently missing for many parcels. 
 
 ### 2025-10-13
 - Adding block-mode slider
