@@ -1581,6 +1581,7 @@ export function showTourStep(map, stepIndex) {
   }
   if (step.text === textTimeline2) {
     selectYear(map, 2);
+    
   }
   if (step.text === textPropertyDetails) {
   }
