@@ -389,17 +389,12 @@ const outputStream2 = fs.createWriteStream(outputPath2);
     const frontage = feature.properties.street_frontage_ft || 0;
     const byYear = feature.properties.vacancy_by_year || {};
     const byNbhd = feature.properties.analysis_neighborhood.trim();
-    // Object.keys(byNbhd).forEach(nbhd => {
       Object.keys(byYear).forEach(year => {
-        // console.log("WHO ARE")
-        // console.log(byYear[year].vacant);
         // Skip entries with missing year or address
         if (!year || !addr) return;
 
-        // console.log()
         // Binary indicator: 1 if address street number contains a hyphen (e.g., '35-37 Main St')
         const hyphenIndicator = /^\s*\d+-\d+/.test(addr) ? 1 : 0;
-        // console.log(nbhd);
         summaryRows.push({
           taxyear: year,
           nbhd: byNbhd,
@@ -408,9 +403,7 @@ const outputStream2 = fs.createWriteStream(outputPath2);
           has_hyphen: hyphenIndicator,
           total_street_frontage_ft: frontage,
         });
-        // console.log(summaryRows);
       });
-    // });
   });
 
   // Deduplicate rows by (taxyear, parcelsitusaddress)
