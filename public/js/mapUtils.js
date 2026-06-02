@@ -1321,7 +1321,7 @@ if (!isMobile()) {
   });
 }
 
-const years = ['2022', '2023', '2024'];
+const years = ['2022', '2023', '2024', '2025'];
 //functions to help with animating across years
 let animateInterval = null;
 

@@ -1,6 +1,9 @@
+
 /*
 merge_and_frontage.js
 This program merges GeoJSON parcels with tax data, and estimates street frontage using parcel boundaries
+
+
 */
 const fs = require('fs');
 const csv = require('csv-parser');
@@ -18,10 +21,11 @@ const now = new Date().toISOString();
 
   
 //source: https://data.sfgov.org/Economy-and-Community/Taxable-Commercial-Spaces/rzkk-54yv/about_data
-const csvPath = '../data/Taxable_Commercial_Spaces_20251123.csv';
+const csvPath = '../data/Taxable_Commercial_Spaces_20260602.csv';
 
 // Extract the date string using RegExp
 const match = csvPath.match(/(\d{8})\.csv$/);
+
 let extractedDate ;
 if (match) {
     const dateStr = match[1]; // "20251020"
@@ -42,7 +46,7 @@ const outputPath2 = '../data/parcels_with_frontage.geojson';
 // Reduce ending file size by dropping some properties from feature.properties and/or each vacancy_by_year entry
 const PROPERTIES_TO_REMOVE = [
   "project_id_drop", "police_district", "supdistpad",
-  "date_map_alt", "odd_even", "zoning_code", "zoning_district", "analysis_neighborhood",
+  "date_map_alt", "odd_even", "zoning_code", "zoning_district", 
   "pw_recorded_map", "date_map_add", "data_loaded_at", "supdist", "planning_district",
   "project_id_alt", "date_map_drop", "supname", "planning_district_number",
   "project_id_add", "date_rec_drop", "police_company", "numbertext", "supervisor_district",
@@ -96,8 +100,7 @@ function extractRepeatedInfo(row) {
 // fields to exclude from yearly records
 const FIELDS_TO_EXCLUDE = [
   'block', 'lot', 'parcelnumber', 'parcelsitusaddress',
-  'longitude', 'latitude', 'location_point',
-  'analysis_neighborhood', 'supervisor_district', 
+  'longitude', 'latitude', 'location_point','supervisor_district', 
   'ban', 'linaddress', 'lin', 'block_num', 'lot_num', 'parcelnumber'
 ];
 
@@ -375,6 +378,59 @@ const outputStream2 = fs.createWriteStream(outputPath2);
   outputStream2.write('  ]\n}\n');
   outputStream2.end();
   console.log(`Merged GeoJSON written to ${outputPath2}`);
+
+
+  // ---- CREATE SUMMARY CSV OUTPUT ----
+  const summaryCsvPath = '../data/parcels_frontage_summary.csv';
+  const summaryRows = [];
+
+  mergedFeatures3.forEach(feature => {
+    const addr = (feature.properties.parcelsitusaddress || '').trim();
+    const frontage = feature.properties.street_frontage_ft || 0;
+    const byYear = feature.properties.vacancy_by_year || {};
+    const byNbhd = feature.properties.analysis_neighborhood.trim();
+    // Object.keys(byNbhd).forEach(nbhd => {
+      Object.keys(byYear).forEach(year => {
+        // console.log("WHO ARE")
+        // console.log(byYear[year].vacant);
+        // Skip entries with missing year or address
+        if (!year || !addr) return;
+
+        // console.log()
+        // Binary indicator: 1 if address street number contains a hyphen (e.g., '35-37 Main St')
+        const hyphenIndicator = /^\s*\d+-\d+/.test(addr) ? 1 : 0;
+        // console.log(nbhd);
+        summaryRows.push({
+          taxyear: year,
+          nbhd: byNbhd,
+          vacant: (byYear[year].vacant == 'YES') ? 1 : 0 ,
+          parcelsitusaddress: addr,
+          has_hyphen: hyphenIndicator,
+          total_street_frontage_ft: frontage,
+        });
+        // console.log(summaryRows);
+      });
+    // });
+  });
+
+  // Deduplicate rows by (taxyear, parcelsitusaddress)
+  const uniqueMap = new Map();
+  summaryRows.forEach(row => {
+    const key = `${row.nbhd}-${row.taxyear}-${row.parcelsitusaddress}`;
+    if (!uniqueMap.has(key)) {
+      uniqueMap.set(key, row);
+    }
+  });
+
+  // Write to CSV
+  const header = 'taxyear,nbhd,parcelsitusaddress,has_hyphen,total_street_frontage_ft,vacant\n';
+  const csvLines = [header, ...[...uniqueMap.values()].map(r =>
+    `${r.taxyear},"${r.nbhd}","${r.parcelsitusaddress}",${r.has_hyphen},${r.total_street_frontage_ft}, ${r.vacant}`
+  )].join('\n');
+
+  fs.writeFileSync(summaryCsvPath, csvLines);
+  console.log(`Summary CSV written to ${summaryCsvPath}`);
+
 }
 
 mergeGeoJSONWithCSV().catch(console.error);

@@ -60,7 +60,6 @@ html, body {
 }
 .mapLevel-tab:focus {
   outline: 2px solid #68a8eb;
-  outline-offset: 1px;
 }
 
 
@@ -504,6 +503,7 @@ footer {
   position: absolute;
   left: 50px;
   z-index: 31;
+  border-radius: 8px;
   top:11%;
   width: 300px;
 }
@@ -516,6 +516,7 @@ footer {
 }
 #map-legend {
   background: var(--legend_color_1);
+  border-radius:8px;
 }
 #legend-minimize-container {
   background: var(--header_color_1);
@@ -567,6 +568,8 @@ footer {
   background: var(--header_color_1);
   color: var(--header_color_2);
   align-items: center;
+  border-top-right-radius:8px;
+  border-top-left-radius:8px;
 }
 
 .title-text, #legend-title-text{
@@ -1065,6 +1068,7 @@ footer {
   .map-filter {
     left:1%;
     top: 30%;
+    border-radius: 8px;
     width: 300px;
   }
   .legend-container {
