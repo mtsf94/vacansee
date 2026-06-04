@@ -31,8 +31,10 @@ const fs = require('fs');
     const margin = 20;
 
     // Common headline text parts
-    const headlineWithQ = "When stores sit vacant, who ends up paying?";
-    const headlineSB = "Your future storefront might already be vacant."
+    const headlineWithQ1 = "SF: 'IS THIS STOREFRONT VACANT?' OWNER: [left on read]";
+    const headlineWithQ2 = "SF: 'IS THIS STOREFRONT VACANT?' OWNER: [NO RESPONSE]";
+    const headlineWithQ3 = "SAN FRANCISCO: '¿ESTE LOCAL ESTÁ DESOCUPADO?' \n PROPIETARIO: [SIN RESPUESTA]";
+    const headlineWithQ4 = " 旧金山：“这个商铺空着吗？” 业主：【未回应】";
 
     // Helper function to draw one poster block
     function drawPosterBlock(xOffset, headlineText) {
@@ -122,8 +124,10 @@ const fs = require('fs');
     }
 
     // Draw posters side-by-side
-    drawPosterBlock(0, headlineWithQ);
-    drawPosterBlock(halfWidth, headlineSB);
+    drawPosterBlock(0, headlineWithQ1);
+    drawPosterBlock(halfWidth, headlineWithQ2)
+    // drawPosterBlock(0, headlineWithQ3);
+    // drawPosterBlock(halfWidth, headlineWithQ3);
   }
 
   const pdfBytes = await pdfDoc.save();
